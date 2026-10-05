@@ -12,11 +12,9 @@ const ICONES = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
 };
 
-// ===== Imagens =====
-const TAMANHO_MAXIMO_IMAGEM = 1080; // px no lado maior
+const TAMANHO_MAXIMO_IMAGEM = 1080;
 const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-// Diminui a imagem e converte para JPEG (data URL), para caber no armazenamento
 function comprimirImagem(arquivo) {
   return new Promise((resolve, reject) => {
     if (!TIPOS_IMAGEM.includes(arquivo.type)) {
@@ -34,7 +32,7 @@ function comprimirImagem(arquivo) {
       canvas.height = Math.round(imagem.height * escala);
 
       const contexto = canvas.getContext('2d');
-      contexto.fillStyle = '#fff'; // fundo branco para PNG transparente
+      contexto.fillStyle = '#fff';
       contexto.fillRect(0, 0, canvas.width, canvas.height);
       contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL('image/jpeg', 0.8));
@@ -47,7 +45,6 @@ function comprimirImagem(arquivo) {
   });
 }
 
-// Imagem em tela cheia
 let telaCheia = null;
 
 function abrirImagem(src) {
@@ -164,7 +161,6 @@ function renderizarComposer() {
     contador.textContent = `${texto.value.length}/1000`;
   });
 
-  // Imagem do post (opcional)
   let imagemEscolhida = null;
   const campoImagem = el('input', { type: 'file', accept: TIPOS_IMAGEM.join(','), hidden: true });
   const botaoImagem = el('button', { type: 'button', class: 'btn-imagem', onclick: () => campoImagem.click() }, [

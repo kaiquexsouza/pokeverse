@@ -1,7 +1,3 @@
-// ===== MODO DEMO: API falsa guardada no navegador (sem servidor e sem banco) =====
-// Responde às mesmas rotas do server/ usando o localStorage, para o site rodar
-// abrindo o index.html direto no navegador.
-// Para voltar a usar o servidor de verdade: remova o <script src="demo.js"> das páginas.
 const Demo = (() => {
   const CHAVE = 'pokeverse_demo';
   const CATEGORIAS = ['jogos', 'animes', 'cards', 'gerais'];
@@ -12,7 +8,6 @@ const Demo = (() => {
     return new Date(Date.now() - minutos * 60000).toISOString();
   }
 
-  // Dados iniciais para o site não começar vazio
   function dadosIniciais() {
     return {
       proximoId: 100,
@@ -41,9 +36,7 @@ const Demo = (() => {
     try {
       const salvo = JSON.parse(localStorage.getItem(CHAVE));
       if (salvo && Array.isArray(salvo.usuarios)) return salvo;
-    } catch {
-      /* sem localStorage ou dado inválido: começa do zero */
-    }
+    } catch {}
     return dadosIniciais();
   }
 
@@ -53,11 +46,9 @@ const Demo = (() => {
     try {
       localStorage.setItem(CHAVE, JSON.stringify(db));
     } catch (err) {
-      // Espaço do navegador cheio (normalmente por causa das imagens)
       if (err && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
         throw erro(413, 'O espaço da demonstração está cheio. Apague alguns posts com imagem ou use "Zerar dados".');
       }
-      /* sem localStorage: os dados duram só até recarregar */
     }
   }
 
@@ -67,13 +58,10 @@ const Demo = (() => {
     try {
       localStorage.removeItem('pokeverse_token');
       localStorage.removeItem('pokeverse_usuario');
-    } catch {
-      /* ignora */
-    }
+    } catch {}
     location.reload();
   }
 
-  // Erro no mesmo formato que o servidor devolve
   function erro(status, mensagem) {
     const e = new Error(mensagem);
     e.status = status;
@@ -109,7 +97,6 @@ const Demo = (() => {
     return usuario ? usuario.nome_usuario : 'desconhecido';
   }
 
-  // Post no formato que o front espera
   function formatarPost(post, usuarioLogado) {
     return {
       id: post.id,
@@ -125,16 +112,14 @@ const Demo = (() => {
     };
   }
 
-  // ===== Rotas =====
   function responder(metodo, caminho, corpo = {}, token) {
     const [rota, query = ''] = caminho.split('?');
-    const partes = rota.split('/').filter(Boolean); // ex.: ['posts', '10', 'curtir']
+    const partes = rota.split('/').filter(Boolean);
 
     if (metodo === 'GET' && rota === '/estatisticas') {
       return { membros: db.usuarios.length, posts: db.posts.length };
     }
 
-    // ----- auth -----
     if (metodo === 'POST' && rota === '/auth/cadastro') {
       const nome_usuario = String(corpo.nome_usuario || '').trim();
       const email = String(corpo.email || '').trim().toLowerCase();
@@ -148,7 +133,6 @@ const Demo = (() => {
       }
       if (db.usuarios.some((u) => u.email === email)) throw erro(409, 'Este e-mail já está cadastrado.');
 
-      // A senha não é guardada: no modo demo o login não confere senha
       const usuario = { id: db.proximoId++, nome_usuario, email };
       db.usuarios.push(usuario);
       salvar();
@@ -176,7 +160,6 @@ const Demo = (() => {
       return exigirLogin(token);
     }
 
-    // ----- posts -----
     if (partes[0] === 'posts') {
       if (metodo === 'GET' && partes.length === 1) {
         const categoria = new URLSearchParams(query).get('categoria');
@@ -202,7 +185,7 @@ const Demo = (() => {
         try {
           salvar();
         } catch (err) {
-          db.posts.pop(); // não deixa o post só na memória se não coube
+          db.posts.pop();
           db.proximoId--;
           throw err;
         }
@@ -256,7 +239,6 @@ const Demo = (() => {
     throw erro(404, 'Rota não encontrada.');
   }
 
-  // ===== Aviso de modo demo (com botão para zerar os dados) =====
   function mostrarAviso() {
     const aviso = document.createElement('div');
     aviso.className = 'demo-aviso';

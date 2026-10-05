@@ -63,7 +63,6 @@ const App = (() => {
 
   // ===== API =====
   async function api(caminho, { metodo = 'GET', corpo } = {}) {
-    // MODO DEMO: com o demo.js carregado, responde pelo navegador em vez do servidor
     if (typeof Demo !== 'undefined') {
       try {
         return Demo.responder(metodo, caminho, corpo, token);

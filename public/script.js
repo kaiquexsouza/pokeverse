@@ -7,7 +7,6 @@ const joinError = document.getElementById('join-error');
 const joinSubmit = document.getElementById('join-submit');
 
 // ===== Contadores (vêm do banco) =====
-// Anima o número do valor atual até o novo
 function animarContador(elemento, valorFinal) {
   const valorInicial = Number(elemento.dataset.valor) || 0;
   elemento.dataset.valor = valorFinal;
