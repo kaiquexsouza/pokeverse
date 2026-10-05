@@ -8,7 +8,68 @@ const ICONES = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
   lixeira:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>',
+  imagem:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
 };
+
+// ===== Imagens =====
+const TAMANHO_MAXIMO_IMAGEM = 1080; // px no lado maior
+const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+// Diminui a imagem e converte para JPEG (data URL), para caber no armazenamento
+function comprimirImagem(arquivo) {
+  return new Promise((resolve, reject) => {
+    if (!TIPOS_IMAGEM.includes(arquivo.type)) {
+      reject(new Error('Escolha uma imagem JPG, PNG, WEBP ou GIF.'));
+      return;
+    }
+
+    const url = URL.createObjectURL(arquivo);
+    const imagem = new Image();
+    imagem.onload = () => {
+      URL.revokeObjectURL(url);
+      const escala = Math.min(1, TAMANHO_MAXIMO_IMAGEM / Math.max(imagem.width, imagem.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(imagem.width * escala);
+      canvas.height = Math.round(imagem.height * escala);
+
+      const contexto = canvas.getContext('2d');
+      contexto.fillStyle = '#fff'; // fundo branco para PNG transparente
+      contexto.fillRect(0, 0, canvas.width, canvas.height);
+      contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    imagem.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Não foi possível abrir essa imagem.'));
+    };
+    imagem.src = url;
+  });
+}
+
+// Imagem em tela cheia
+let telaCheia = null;
+
+function abrirImagem(src) {
+  if (!telaCheia) {
+    telaCheia = el('div', { class: 'imagem-tela-cheia', hidden: true, onclick: fecharImagem }, [
+      el('img', { alt: 'Imagem do post' }),
+      el('button', { type: 'button', class: 'modal-close', 'aria-label': 'Fechar', text: '×' }),
+    ]);
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Escape' && !telaCheia.hidden) fecharImagem();
+    });
+    document.body.append(telaCheia);
+  }
+  telaCheia.querySelector('img').src = src;
+  telaCheia.hidden = false;
+  document.body.classList.add('sem-rolagem');
+}
+
+function fecharImagem() {
+  telaCheia.hidden = true;
+  document.body.classList.remove('sem-rolagem');
+}
 
 const CORES_AVATAR = ['#DC2626', '#2563EB', '#D97706', '#7C3AED', '#059669', '#DB2777'];
 
@@ -87,7 +148,6 @@ function renderizarComposer() {
     rows: 3,
     maxlength: 1000,
     placeholder: `No que você está pensando, @${usuario.nome_usuario}?`,
-    required: true,
   });
   const contador = el('span', { class: 'composer-contador', text: '0/1000' });
   const seletor = el(
@@ -104,6 +164,49 @@ function renderizarComposer() {
     contador.textContent = `${texto.value.length}/1000`;
   });
 
+  // Imagem do post (opcional)
+  let imagemEscolhida = null;
+  const campoImagem = el('input', { type: 'file', accept: TIPOS_IMAGEM.join(','), hidden: true });
+  const botaoImagem = el('button', { type: 'button', class: 'btn-imagem', onclick: () => campoImagem.click() }, [
+    icone(ICONES.imagem),
+    el('span', { text: 'Imagem' }),
+  ]);
+  const previaImagem = el('img', { alt: 'Prévia da imagem' });
+  const previa = el('div', { class: 'composer-previa', hidden: true }, [
+    previaImagem,
+    el('button', {
+      type: 'button',
+      class: 'composer-previa-remover',
+      'aria-label': 'Remover imagem',
+      title: 'Remover imagem',
+      text: '×',
+      onclick: () => definirImagem(null),
+    }),
+  ]);
+
+  function definirImagem(dataUrl) {
+    imagemEscolhida = dataUrl;
+    previa.hidden = !dataUrl;
+    if (dataUrl) previaImagem.src = dataUrl;
+    else previaImagem.removeAttribute('src');
+    campoImagem.value = '';
+  }
+
+  campoImagem.addEventListener('change', async () => {
+    const arquivo = campoImagem.files[0];
+    if (!arquivo) return;
+    App.mostrarErro(erro, '');
+    botaoImagem.disabled = true;
+    try {
+      definirImagem(await comprimirImagem(arquivo));
+    } catch (err) {
+      definirImagem(null);
+      App.mostrarErro(erro, err.message);
+    } finally {
+      botaoImagem.disabled = false;
+    }
+  });
+
   const form = el(
     'form',
     {
@@ -111,14 +214,19 @@ function renderizarComposer() {
       onsubmit: async (evento) => {
         evento.preventDefault();
         App.mostrarErro(erro, '');
+        if (!texto.value.trim() && !imagemEscolhida) {
+          App.mostrarErro(erro, 'Escreva algo ou escolha uma imagem.');
+          return;
+        }
         botao.disabled = true;
         botao.textContent = 'Publicando…';
         try {
           const post = await api('/posts', {
             metodo: 'POST',
-            corpo: { categoria: seletor.value, conteudo: texto.value },
+            corpo: { categoria: seletor.value, conteudo: texto.value, imagem: imagemEscolhida },
           });
           form.reset();
+          definirImagem(null);
           contador.textContent = '0/1000';
           if (categoriaAtual && categoriaAtual !== post.categoria) {
             trocarCategoria(post.categoria);
@@ -136,8 +244,9 @@ function renderizarComposer() {
     },
     [
       el('div', { class: 'composer-linha' }, [avatar(usuario.nome_usuario), texto]),
+      previa,
       erro,
-      el('div', { class: 'composer-rodape' }, [seletor, contador, botao]),
+      el('div', { class: 'composer-rodape' }, [botaoImagem, campoImagem, seletor, contador, botao]),
     ]
   );
 
@@ -238,7 +347,11 @@ function cartaoPost(post) {
       }),
       botaoApagar,
     ]),
-    el('p', { class: 'post-texto', text: post.conteudo }),
+    post.conteudo && el('p', { class: 'post-texto', text: post.conteudo }),
+    post.imagem &&
+      el('button', { type: 'button', class: 'post-imagem', 'aria-label': 'Ver imagem em tela cheia', onclick: () => abrirImagem(post.imagem) }, [
+        el('img', { src: post.imagem, alt: 'Imagem do post', loading: 'lazy' }),
+      ]),
     el('div', { class: 'post-acoes' }, [botaoCurtir, botaoComentar]),
     areaComentarios,
   ]);

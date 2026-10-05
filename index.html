@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -29,8 +28,8 @@
       </a>
       <nav class="nav">
         <a href="#categorias" class="nav-link">Categorias</a>
-        <a href="feed.html" class="nav-link nav-link-feed">Feed</a>
-        <div id="nav-auth" class="nav-auth"></div>
+        <a href="#entrar" class="nav-link">Entrar</a>
+        <button type="button" class="btn-login" id="btn-login">Login</button>
       </nav>
     </div>
   </header>
@@ -60,12 +59,12 @@
 
           <div class="stats">
             <div class="stat">
-              <div class="stat-value font-outfit" id="stat-membros">–</div>
+              <div class="stat-value font-outfit">4.2k+</div>
               <div class="stat-label">Membros</div>
             </div>
             <div class="stat-divider"></div>
             <div class="stat">
-              <div class="stat-value font-outfit" id="stat-posts">–</div>
+              <div class="stat-value font-outfit">120+</div>
               <div class="stat-label">Discussões</div>
             </div>
             <div class="stat-divider"></div>
@@ -76,7 +75,7 @@
           </div>
 
           <div class="hero-actions">
-            <a href="#entrar" class="btn btn-primary" data-cta>Quero participar</a>
+            <a href="#entrar" class="btn btn-primary">Quero participar</a>
             <a href="#categorias" class="btn btn-outline">Ver categorias</a>
           </div>
         </div>
@@ -180,27 +179,21 @@
             </div>
 
             <div class="field">
-              <label for="nome_usuario">Nome de usuário</label>
-              <input id="nome_usuario" name="nome_usuario" type="text" placeholder="ash_ketchum" autocomplete="username"
-                minlength="3" maxlength="20" pattern="[a-zA-Z0-9_.]{3,20}"
-                title="De 3 a 20 caracteres: letras, números, _ ou ." required />
+              <label for="nome">Nome</label>
+              <input id="nome" name="nome" type="text" placeholder="Ash Ketchum" required />
             </div>
 
             <div class="field">
               <label for="email">E-mail</label>
-              <input id="email" name="email" type="email" placeholder="ash@pallet.town" autocomplete="email" required />
+              <input id="email" name="email" type="email" placeholder="ash@pallet.town" required />
             </div>
 
             <div class="field">
-              <label for="senha">Senha</label>
-              <input id="senha" name="senha" type="password" placeholder="Mínimo de 6 caracteres" autocomplete="new-password"
-                minlength="6" required />
+              <label for="matricula">Matrícula</label>
+              <input id="matricula" name="matricula" type="text" placeholder="2024001234" required />
             </div>
 
-            <p class="form-error" id="join-error" role="alert" hidden></p>
-
-            <button type="submit" class="btn-submit" id="join-submit">Juntar-se à Comunidade</button>
-            <p class="form-terms">Já tem conta? <button type="button" class="link" id="join-login">Faça login</button></p>
+            <button type="submit" class="btn-submit">Juntar-se à Comunidade</button>
             <p class="form-terms">Ao se cadastrar, você aceita nossos termos de participação.</p>
           </form>
 
@@ -210,8 +203,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" /></svg>
             </div>
             <h3 class="form-title font-outfit" id="success-title">Bem-vindo, Treinador!</h3>
-            <p class="form-desc">Sua conta está pronta. Agora você já pode postar, curtir e comentar.</p>
-            <a href="feed.html" class="btn btn-primary">Ir para o feed</a>
+            <p class="form-desc">Verifique seu e-mail para confirmar o cadastro e receber o link do Discord.</p>
           </div>
         </div>
       </div>
@@ -230,7 +222,7 @@
       </div>
 
       <div class="cards">
-        <a href="feed.html?categoria=jogos" class="cat-card">
+        <div class="cat-card">
           <div class="cat-icon" style="background-color:#FEF2F2;color:#DC2626">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <rect x="2" y="6" width="20" height="12" rx="6" />
@@ -241,9 +233,9 @@
           </div>
           <h3 class="cat-title font-outfit">Jogos Pokémon</h3>
           <p class="cat-desc">Dicas, análises e discussões sobre todos os títulos da franquia, do Red ao Scarlet.</p>
-        </a>
+        </div>
 
-        <a href="feed.html?categoria=animes" class="cat-card">
+        <div class="cat-card">
           <div class="cat-icon" style="background-color:#EFF6FF;color:#2563EB">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <rect x="2" y="3" width="20" height="18" rx="3" />
@@ -252,9 +244,9 @@
           </div>
           <h3 class="cat-title font-outfit">Animes</h3>
           <p class="cat-desc">Episódios, arcos, personagens e tudo sobre a jornada de Ash, Liko e Roy.</p>
-        </a>
+        </div>
 
-        <a href="feed.html?categoria=cards" class="cat-card">
+        <div class="cat-card">
           <div class="cat-icon" style="background-color:#FFFBEB;color:#D97706">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <rect x="2" y="5" width="14" height="18" rx="2" />
@@ -263,9 +255,9 @@
           </div>
           <h3 class="cat-title font-outfit">Trading Cards</h3>
           <p class="cat-desc">Precificação, decks competitivos, raridades e abertura de boosters.</p>
-        </a>
+        </div>
 
-        <a href="feed.html?categoria=gerais" class="cat-card">
+        <div class="cat-card">
           <div class="cat-icon" style="background-color:#F5F3FF;color:#7C3AED">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -273,7 +265,7 @@
           </div>
           <h3 class="cat-title font-outfit">Assuntos Gerais</h3>
           <p class="cat-desc">Teorias, humor, novidades e qualquer coisa do universo Pokémon.</p>
-        </a>
+        </div>
       </div>
     </div>
   </section>
@@ -284,8 +276,8 @@
     <div class="cta-ring cta-ring-left"></div>
     <div class="container cta-inner">
       <h2 class="cta-title font-outfit">Pronto para começar sua jornada?</h2>
-      <p class="cta-desc" id="cta-membros">Treinadores de todo lugar já estão esperando por você.</p>
-      <a href="#entrar" class="btn-cta" data-cta>Entrar no Pokeverse</a>
+      <p class="cta-desc">Mais de 4.200 treinadores já estão esperando por você.</p>
+      <a href="#entrar" class="btn-cta">Entrar no Pokeverse</a>
     </div>
   </section>
 
@@ -330,8 +322,6 @@
     </div>
   </footer>
 
-  <script src="demo.js"></script>
-  <script src="app.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

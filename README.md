@@ -24,6 +24,14 @@ server/schema.sql  tabelas: usuarios, posts, curtidas, comentarios
 render.yaml        configuração de deploy no Render
 ```
 
+## Modo demo (sem servidor e sem banco)
+Hoje o site está em **modo demo**: basta abrir o `public/index.html` no navegador (ou pelo Live Server).
+O `public/demo.js` imita a API e guarda cadastros e posts no `localStorage`, então o contador de
+membros/discussões sobe ao se cadastrar ou postar. Os dados ficam só naquele navegador
+(o botão "Zerar dados" no aviso do topo volta ao início), e o login não confere a senha.
+
+Para usar o servidor de verdade, remova a linha `<script src="demo.js"></script>` do `index.html` e do `feed.html`.
+
 ## Rodando localmente
 1. Instale o [Node.js](https://nodejs.org) 20+ e o PostgreSQL (o instalador já inclui o pgAdmin).
 2. No **pgAdmin**: clique com o botão direito em *Databases → Create → Database…*, nome `pokeverse`.

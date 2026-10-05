@@ -1472,3 +1472,118 @@ a.cat-card {
     display: none;
   }
 }
+
+/* ===== MODO DEMO (aviso do demo.js) ===== */
+.demo-aviso {
+  padding: 8px 16px;
+  background-color: #FFFBEB;
+  border-bottom: 1px solid #FDE68A;
+  color: #92400E;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ===== Imagens nos posts ===== */
+.btn-imagem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+
+.btn-imagem:hover {
+  border-color: #60a5fa;
+  color: #2563eb;
+}
+
+.composer-previa {
+  position: relative;
+  width: fit-content;
+  margin-left: 3.25rem; /* alinha com o texto, depois do avatar */
+}
+
+.composer-previa[hidden] {
+  display: none;
+}
+
+.composer-previa img {
+  display: block;
+  max-width: 100%;
+  max-height: 16rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.composer-previa-remover {
+  position: absolute;
+  top: 0.375rem;
+  right: 0.375rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background: rgb(17 24 39 / 0.7);
+  color: #fff;
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.composer-previa-remover:hover {
+  background: #dc2626;
+}
+
+.post-imagem {
+  display: block;
+  width: 100%;
+  margin-top: 0.875rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #f3f4f6;
+  cursor: zoom-in;
+}
+
+.post-imagem img {
+  display: block;
+  width: 100%;
+  max-height: 32rem;
+  object-fit: contain;
+}
+
+.imagem-tela-cheia {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(17 24 39 / 0.9);
+  cursor: zoom-out;
+  animation: fade-in 0.2s ease;
+}
+
+.imagem-tela-cheia[hidden] {
+  display: none;
+}
+
+.imagem-tela-cheia img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 0.5rem;
+}
+
+.imagem-tela-cheia .modal-close {
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .composer-previa {
+    margin-left: 0;
+  }
+}

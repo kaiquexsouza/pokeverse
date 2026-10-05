@@ -7,11 +7,27 @@ const joinError = document.getElementById('join-error');
 const joinSubmit = document.getElementById('join-submit');
 
 // ===== Contadores (vêm do banco) =====
+// Anima o número do valor atual até o novo
+function animarContador(elemento, valorFinal) {
+  const valorInicial = Number(elemento.dataset.valor) || 0;
+  elemento.dataset.valor = valorFinal;
+  const duracao = 800;
+  const inicio = performance.now();
+
+  function passo(agora) {
+    const progresso = Math.min((agora - inicio) / duracao, 1);
+    const atual = Math.round(valorInicial + (valorFinal - valorInicial) * progresso);
+    elemento.textContent = App.formatarNumero(atual);
+    if (progresso < 1) requestAnimationFrame(passo);
+  }
+  requestAnimationFrame(passo);
+}
+
 async function carregarEstatisticas() {
   try {
     const { membros, posts } = await App.api('/estatisticas');
-    document.getElementById('stat-membros').textContent = App.formatarNumero(membros);
-    document.getElementById('stat-posts').textContent = App.formatarNumero(posts);
+    animarContador(document.getElementById('stat-membros'), membros);
+    animarContador(document.getElementById('stat-posts'), posts);
 
     const cta = document.getElementById('cta-membros');
     if (membros === 0) cta.textContent = 'Seja o primeiro treinador a entrar!';
