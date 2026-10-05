@@ -1,0 +1,20 @@
+{
+  "name": "pokeverse",
+  "version": "1.0.0",
+  "description": "Comunidade de fãs de Pokémon: cadastro, login, posts, curtidas e comentários.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1"
+  }
+}

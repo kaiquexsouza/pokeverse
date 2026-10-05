@@ -1,0 +1,25 @@
+# Blueprint do Render: cria o site (Node) e o banco PostgreSQL já conectados.
+# No Render: New > Blueprint > escolha este repositório.
+services:
+  - type: web
+    name: pokeverse
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/saude
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pokeverse-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+
+databases:
+  - name: pokeverse-db
+    plan: free
+    databaseName: pokeverse
+    user: pokeverse
