@@ -78,6 +78,55 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
+const DATA_LANCAMENTO = new Date('2026-11-05T00:00:00-03:00');
+
+function iniciarContagemRegressiva() {
+  const campos = {
+    dias: document.getElementById('cd-dias'),
+    horas: document.getElementById('cd-horas'),
+    minutos: document.getElementById('cd-minutos'),
+    segundos: document.getElementById('cd-segundos'),
+  };
+
+  const data = new Intl.DateTimeFormat('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'America/Sao_Paulo',
+  }).format(DATA_LANCAMENTO);
+  document.getElementById('launch-date').textContent = `${data[0].toUpperCase()}${data.slice(1)} · 00h (horário de Brasília)`;
+
+  function doisDigitos(numero) {
+    return String(numero).padStart(2, '0');
+  }
+
+  function atualizar() {
+    const restante = Math.max(0, DATA_LANCAMENTO - Date.now());
+    const totalSegundos = Math.floor(restante / 1000);
+
+    campos.dias.textContent = doisDigitos(Math.floor(totalSegundos / 86400));
+    campos.horas.textContent = doisDigitos(Math.floor((totalSegundos % 86400) / 3600));
+    campos.minutos.textContent = doisDigitos(Math.floor((totalSegundos % 3600) / 60));
+    campos.segundos.textContent = doisDigitos(totalSegundos % 60);
+
+    if (restante === 0) {
+      clearInterval(intervalo);
+      document.getElementById('launch-title').replaceChildren(
+        'O Pokeverse ',
+        App.el('span', { class: 'text-yellow', text: 'chegou!' })
+      );
+      document.getElementById('launch-desc').textContent =
+        'O lançamento oficial já aconteceu. Entre, crie seu post e encontre outros treinadores.';
+    }
+  }
+
+  const intervalo = setInterval(atualizar, 1000);
+  atualizar();
+}
+
+iniciarContagemRegressiva();
+
 document.getElementById('join-login').addEventListener('click', App.abrirLogin);
 document.addEventListener('sessao', () => {
   atualizarTela();

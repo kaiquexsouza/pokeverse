@@ -126,6 +126,54 @@
     <div class="hr"></div>
   </section>
 
+  <section id="lancamento" class="launch">
+    <svg viewBox="0 0 200 200" class="launch-ball" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 10 100 A 90 90 0 0 1 190 100 Z" fill="#DC2626" />
+      <path d="M 10 100 A 90 90 0 0 0 190 100 Z" fill="white" />
+      <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" stroke-width="8" />
+      <line x1="10" y1="100" x2="190" y2="100" stroke="currentColor" stroke-width="8" />
+      <circle cx="100" cy="100" r="24" fill="currentColor" />
+      <circle cx="100" cy="100" r="16" fill="white" />
+    </svg>
+    <div class="launch-ring"></div>
+
+    <div class="container launch-inner">
+      <div class="launch-text">
+        <div class="pill pill-yellow">
+          <span class="pulse-dot pulse-dot-yellow"></span>
+          <span>Contagem regressiva</span>
+        </div>
+        <h2 class="launch-title font-outfit" id="launch-title">
+          Lançamento oficial em<br />
+          <span class="text-yellow">5 de novembro.</span>
+        </h2>
+        <p class="launch-desc" id="launch-desc">
+          Prepare suas Pokébolas: o Pokeverse abre as portas para todos os treinadores. Cadastre-se antes e garanta seu lugar desde o primeiro dia.
+        </p>
+        <p class="launch-date" id="launch-date"></p>
+      </div>
+
+      <div class="countdown" id="countdown" role="timer" aria-label="Tempo até o lançamento">
+        <div class="countdown-box">
+          <span class="countdown-value font-outfit" id="cd-dias">--</span>
+          <span class="countdown-label">Dias</span>
+        </div>
+        <div class="countdown-box">
+          <span class="countdown-value font-outfit" id="cd-horas">--</span>
+          <span class="countdown-label">Horas</span>
+        </div>
+        <div class="countdown-box">
+          <span class="countdown-value font-outfit" id="cd-minutos">--</span>
+          <span class="countdown-label">Minutos</span>
+        </div>
+        <div class="countdown-box">
+          <span class="countdown-value font-outfit" id="cd-segundos">--</span>
+          <span class="countdown-label">Segundos</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- CADASTRO -->
   <section id="entrar" class="join">
     <div class="join-ring join-ring-red"></div>
