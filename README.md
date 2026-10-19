@@ -8,6 +8,9 @@ Pokeverse é um projeto de uma comunidade/fraternidade universitária web voltad
 - Criar posts com texto e/ou imagem, curtir/descurtir, comentar e apagar os próprios posts
 - Feed avisa quando chegam posts novos (confere a cada 20 s)
 - Contagem regressiva para o lançamento (5 de novembro)
+- **Encontros presenciais** (`encontros.html`): marcar batalhas, trocas de cartas, torneios, maratonas e bate-papos,
+  com data, local, cidade e vagas; confirmar presença ("Eu vou!"); filtros por tipo e cidade; aba "Que eu vou";
+  os 3 próximos aparecem na página inicial. O local exato só aparece para quem tem conta.
 
 ## Segurança
 - Senhas com bcrypt e sessão com JWT (`JWT_SECRET` gerado pelo Render)
@@ -24,13 +27,13 @@ Pokeverse é um projeto de uma comunidade/fraternidade universitária web voltad
 
 ## Estrutura
 ```
-public/            site (index.html, feed.html, style.css, app.js, script.js, feed.js)
+public/            site (index.html, feed.html, encontros.html, style.css, app.js, script.js, feed.js, encontros.js)
 server/index.js    servidor Express (serve o site e a API)
 server/db.js       conexão com o PostgreSQL
 server/auth.js     geração/validação do token de login
 server/limites.js  limites de tentativas por IP/usuário
-server/routes/     rotas da API (auth.js, posts.js)
-server/schema.sql  tabelas: usuarios, posts, curtidas, comentarios
+server/routes/     rotas da API (auth.js, posts.js, encontros.js)
+server/schema.sql  tabelas: usuarios, posts, curtidas, comentarios, encontros, encontro_participantes
 render.yaml        configuração de deploy no Render
 ```
 
@@ -82,5 +85,9 @@ Observações do plano gratuito:
 | POST | `/api/posts/:id/curtir` | ✔ | curte/descurte |
 | GET | `/api/posts/:id/comentarios` | | lista comentários |
 | POST | `/api/posts/:id/comentarios` | ✔ | `{ conteudo }` |
+| GET | `/api/encontros?tipo=&cidade=&meus=1&limite=` | | próximos encontros (`meus=1` exige login) |
+| POST | `/api/encontros` | ✔ | `{ tipo, titulo, data_hora, local, cidade, vagas, descricao }` |
+| DELETE | `/api/encontros/:id` | ✔ | cancela (só o organizador) |
+| POST | `/api/encontros/:id/participar` | ✔ | confirma ou desfaz a presença |
 
 Rotas com login exigem o header `Authorization: Bearer <token>`.

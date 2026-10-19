@@ -7,6 +7,7 @@ const db = require('./db');
 const { limiteGeral } = require('./limites');
 const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/posts');
+const encontroRoutes = require('./routes/encontros');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +34,7 @@ app.use(express.json({ limit: '20kb' }));
 app.use('/api', limiteGeral);
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/encontros', encontroRoutes);
 
 app.get('/api/estatisticas', async (req, res) => {
   const { rows } = await db.query(

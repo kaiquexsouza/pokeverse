@@ -10,6 +10,14 @@ const App = (() => {
     gerais: { nome: 'Assuntos Gerais', cor: '#7C3AED', fundo: '#F5F3FF' },
   };
 
+  const TIPOS_ENCONTRO = {
+    batalha: { nome: 'Batalha / jogatina', emoji: '⚔️', cor: '#DC2626', fundo: '#FEF2F2' },
+    troca: { nome: 'Troca de cartas', emoji: '🃏', cor: '#D97706', fundo: '#FFFBEB' },
+    torneio: { nome: 'Torneio', emoji: '🏆', cor: '#7C3AED', fundo: '#F5F3FF' },
+    anime: { nome: 'Maratona de anime', emoji: '📺', cor: '#2563EB', fundo: '#EFF6FF' },
+    papo: { nome: 'Bate-papo', emoji: '💬', cor: '#059669', fundo: '#ECFDF5' },
+  };
+
   // ===== Sessão (guardada no navegador) =====
   function ler(chave) {
     try {
@@ -102,7 +110,12 @@ const App = (() => {
       if (valor === null || valor === undefined || valor === false) continue;
       if (nome === 'class') elemento.className = valor;
       else if (nome === 'text') elemento.textContent = valor;
-      else if (nome === 'style') Object.assign(elemento.style, valor);
+      else if (nome === 'style') {
+        for (const [propriedade, valorEstilo] of Object.entries(valor)) {
+          if (propriedade.startsWith('--')) elemento.style.setProperty(propriedade, valorEstilo);
+          else elemento.style[propriedade] = valorEstilo;
+        }
+      }
       else if (nome.startsWith('on')) elemento.addEventListener(nome.slice(2), valor);
       else elemento.setAttribute(nome, valor === true ? '' : valor);
     }
@@ -111,6 +124,18 @@ const App = (() => {
       elemento.append(filho);
     }
     return elemento;
+  }
+
+  const CORES_AVATAR = ['#DC2626', '#2563EB', '#D97706', '#7C3AED', '#059669', '#DB2777'];
+
+  function avatar(nome) {
+    let soma = 0;
+    for (const letra of nome) soma += letra.charCodeAt(0);
+    return el('span', {
+      class: 'avatar',
+      text: nome[0].toUpperCase(),
+      style: { backgroundColor: CORES_AVATAR[soma % CORES_AVATAR.length] },
+    });
   }
 
   // Ícones SVG fixos (sem conteúdo do usuário)
@@ -137,6 +162,17 @@ const App = (() => {
       if (Math.abs(segundos) >= tamanho) return relativo.format(Math.round(segundos / tamanho), unidade);
     }
     return 'agora mesmo';
+  }
+
+  function blocoData(dataHora, tipo) {
+    const data = new Date(dataHora);
+    const parte = (opcoes) => new Intl.DateTimeFormat('pt-BR', opcoes).format(data).replace('.', '');
+    return el('div', { class: 'bloco-data', style: { '--cor-tipo': TIPOS_ENCONTRO[tipo].cor } }, [
+      el('span', { class: 'bloco-data-semana', text: parte({ weekday: 'short' }) }),
+      el('span', { class: 'bloco-data-dia font-outfit', text: parte({ day: '2-digit' }) }),
+      el('span', { class: 'bloco-data-mes', text: parte({ month: 'short' }) }),
+      el('span', { class: 'bloco-data-hora', text: parte({ hour: '2-digit', minute: '2-digit' }) }),
+    ]);
   }
 
   function formatarNumero(numero) {
@@ -278,8 +314,11 @@ const App = (() => {
 
   return {
     CATEGORIAS,
+    TIPOS_ENCONTRO,
+    blocoData,
     api,
     el,
+    avatar,
     icone,
     tempoRelativo,
     formatarNumero,

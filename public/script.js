@@ -127,6 +127,41 @@ function iniciarContagemRegressiva() {
 
 iniciarContagemRegressiva();
 
+async function carregarProximosEncontros() {
+  const secao = document.getElementById('encontros');
+  const area = document.getElementById('home-encontros');
+  try {
+    const encontros = await App.api('/encontros?limite=3');
+    if (!encontros.length) {
+      area.replaceChildren(
+        App.el('div', { class: 'meetups-vazio' }, [
+          App.el('p', { text: 'Nenhum encontro marcado ainda. Que tal ser o primeiro?' }),
+          App.el('a', { href: 'encontros.html', class: 'btn btn-primary', text: 'Marcar um encontro' }),
+        ])
+      );
+    } else {
+      area.replaceChildren(
+        ...encontros.map((encontro) => {
+          const tipo = App.TIPOS_ENCONTRO[encontro.tipo];
+          return App.el('a', { href: 'encontros.html', class: 'meetup-card', style: { '--cor-tipo': tipo.cor, '--fundo-tipo': tipo.fundo } }, [
+            App.blocoData(encontro.data_hora, encontro.tipo),
+            App.el('div', { class: 'meetup-card-corpo' }, [
+              App.el('span', { class: 'encontro-tipo' }, [App.el('span', { 'aria-hidden': 'true', text: tipo.emoji }), tipo.nome]),
+              App.el('h3', { class: 'meetup-card-titulo font-outfit', text: encontro.titulo }),
+              App.el('p', { class: 'meetup-card-info', text: `${encontro.cidade} · ${encontro.participantes} confirmado${encontro.participantes === 1 ? '' : 's'}` }),
+            ]),
+          ]);
+        })
+      );
+    }
+    secao.hidden = false;
+  } catch {
+    secao.hidden = true;
+  }
+}
+
+carregarProximosEncontros();
+
 document.getElementById('join-login').addEventListener('click', App.abrirLogin);
 document.addEventListener('sessao', () => {
   atualizarTela();

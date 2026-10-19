@@ -1721,3 +1721,516 @@ a.cat-card {
 .feed-novos[hidden] {
   display: none;
 }
+
+.encontros-desc {
+  max-width: 36rem;
+  margin: -0.75rem 0 1.5rem;
+  color: #6b7280;
+}
+
+.encontros-container {
+  max-width: 56rem;
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+.aviso-seguranca {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #fde68a;
+  border-radius: 1rem;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.aviso-seguranca svg {
+  flex-shrink: 0;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-top: 0.125rem;
+}
+
+.encontros-barra {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.filtro-tipos {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: none;
+}
+
+.filtro-tipos::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  background: #fff;
+  color: #4b5563;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+
+.chip:hover {
+  border-color: var(--cor-tipo);
+  color: var(--cor-tipo);
+}
+
+.chip-ativo,
+.chip-ativo:hover {
+  border-color: var(--cor-tipo);
+  background: var(--cor-tipo);
+  color: #fff;
+}
+
+.encontros-barra-linha {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filtro-cidade {
+  flex: 1;
+  min-width: 12rem;
+  padding: 0.625rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #1f2937;
+  font-size: 0.875rem;
+}
+
+.filtro-cidade:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px #2563eb33;
+}
+
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #1f2937;
+  background: #f9fafb;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.encontro-form {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #f3f4f6;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08);
+  animation: fade-in 0.2s ease;
+}
+
+.encontro-form > * + * {
+  margin-top: 1rem;
+}
+
+.encontro-form-grade {
+  display: grid;
+  gap: 1rem;
+}
+
+.encontro-form-botoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.encontros-lista {
+  display: grid;
+  gap: 1rem;
+}
+
+.encontro {
+  display: flex;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid #f3f4f6;
+  border-top: 4px solid var(--cor-tipo);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  animation: fade-in 0.3s ease;
+}
+
+.bloco-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 4.5rem;
+  align-self: flex-start;
+  padding: 0.5rem 0.25rem;
+  border-radius: 0.875rem;
+  background: var(--cor-tipo);
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.bloco-data-semana,
+.bloco-data-mes {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+}
+
+.bloco-data-dia {
+  font-size: 1.875rem;
+  font-weight: 900;
+}
+
+.bloco-data-hora {
+  margin-top: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.22);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.encontro-corpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.encontro-corpo > * + * {
+  margin-top: 0.5rem;
+}
+
+.encontro-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: var(--fundo-tipo);
+  color: var(--cor-tipo);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.encontro-titulo {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.encontro-linha {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: #4b5563;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.encontro-linha .icon {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  color: var(--cor-tipo);
+}
+
+.encontro-linha .icon svg,
+.encontro-mapa .icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.encontro-descricao {
+  color: #374151;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.encontro-vagas {
+  padding-top: 0.25rem;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.encontro-vagas-barra {
+  height: 0.375rem;
+  margin-top: 0.375rem;
+  border-radius: 9999px;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.encontro-vagas-barra span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cor-tipo);
+}
+
+.encontro-pessoas {
+  display: flex;
+  align-items: center;
+}
+
+.encontro-pessoas .avatar {
+  width: 2rem;
+  height: 2rem;
+  margin-right: -0.5rem;
+  border: 2px solid #fff;
+  font-size: 0.8125rem;
+}
+
+.encontro-mais {
+  margin-left: 0.875rem;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.encontro-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.5rem !important;
+}
+
+.encontro-acoes .btn:disabled {
+  box-shadow: none;
+}
+
+.btn-vou-confirmado {
+  border-color: #059669;
+  color: #059669;
+}
+
+.btn-vou-confirmado .texto-sair,
+.btn-vou-confirmado:hover .texto-vou {
+  display: none;
+}
+
+.btn-vou-confirmado:hover .texto-sair {
+  display: inline;
+}
+
+.btn-vou-confirmado:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.encontro-selo {
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  background: var(--fundo-tipo);
+  color: var(--cor-tipo);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.encontro-selo-agora {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.encontro-mapa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #2563eb;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.encontro-mapa:hover {
+  text-decoration: underline;
+}
+
+.encontro-cancelar {
+  margin-left: auto;
+  color: #9ca3af;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.encontro-cancelar:hover {
+  color: #dc2626;
+}
+
+@media (min-width: 640px) {
+  .encontros-barra-linha .btn {
+    flex-shrink: 0;
+  }
+
+  .encontro-form-grade {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .campo-largo {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 479px) {
+  .encontro {
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  .bloco-data {
+    flex-direction: row;
+    gap: 0.5rem;
+    width: auto;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .bloco-data-dia {
+    font-size: 1.125rem;
+  }
+
+  .bloco-data-hora {
+    margin-top: 0;
+    margin-left: auto;
+  }
+
+  .encontros-barra-linha .btn {
+    width: 100%;
+  }
+}
+
+.meetups {
+  padding: 5rem 0;
+  background: #f9fafb;
+}
+
+.meetups[hidden] {
+  display: none;
+}
+
+.meetups-head {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.meetups-head .section-title {
+  margin-top: 1rem;
+}
+
+.meetups-desc {
+  margin: 0.5rem 0 0;
+}
+
+.meetups-lista {
+  display: grid;
+  gap: 1rem;
+}
+
+.meetup-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid #f3f4f6;
+  border-top: 4px solid var(--cor-tipo);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  transition: all 0.3s;
+}
+
+.meetup-card:hover {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transform: translateY(-0.25rem);
+}
+
+.meetup-card-corpo {
+  min-width: 0;
+}
+
+.meetup-card-corpo > * + * {
+  margin-top: 0.5rem;
+}
+
+.meetup-card-titulo {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.meetup-card-info {
+  color: #6b7280;
+  font-size: 0.8125rem;
+}
+
+.meetups-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 1rem;
+  border: 2px dashed #e5e7eb;
+  border-radius: 1rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .meetups-head {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .meetups-lista {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.header-inner {
+  gap: 1rem;
+}
+
+@media (max-width: 479px) {
+  .brand-name {
+    display: none;
+  }
+
+  .nav {
+    gap: 0.875rem;
+  }
+}

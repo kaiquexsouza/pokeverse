@@ -26,7 +26,23 @@ async function initDb() {
   await pool.query(schema);
 }
 
+async function transacao(funcao) {
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+    const resultado = await funcao(cliente);
+    await cliente.query('COMMIT');
+    return resultado;
+  } catch (err) {
+    await cliente.query('ROLLBACK');
+    throw err;
+  } finally {
+    cliente.release();
+  }
+}
+
 module.exports = {
   query: (text, params) => pool.query(text, params),
+  transacao,
   initDb,
 };

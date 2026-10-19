@@ -1,5 +1,5 @@
 // Feed: listar, criar e apagar posts; curtir; comentar.
-const { el, icone, api, CATEGORIAS } = App;
+const { el, icone, api, avatar, CATEGORIAS } = App;
 
 const ICONES = {
   coracao:
@@ -73,8 +73,6 @@ function fecharImagem() {
   document.body.classList.remove('sem-rolagem');
 }
 
-const CORES_AVATAR = ['#DC2626', '#2563EB', '#D97706', '#7C3AED', '#059669', '#DB2777'];
-
 const tabs = document.getElementById('tabs');
 const composer = document.getElementById('composer');
 const listaPosts = document.getElementById('posts');
@@ -90,16 +88,6 @@ listaPosts.before(avisoNovos);
 
 let categoriaAtual = new URLSearchParams(location.search).get('categoria');
 if (!CATEGORIAS[categoriaAtual]) categoriaAtual = '';
-
-function avatar(nome) {
-  let soma = 0;
-  for (const letra of nome) soma += letra.charCodeAt(0);
-  return el('span', {
-    class: 'avatar',
-    text: nome[0].toUpperCase(),
-    style: { backgroundColor: CORES_AVATAR[soma % CORES_AVATAR.length] },
-  });
-}
 
 function mostrarStatus(texto) {
   statusFeed.textContent = texto || '';

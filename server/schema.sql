@@ -48,3 +48,27 @@ CREATE TABLE IF NOT EXISTS comentarios (
 );
 
 CREATE INDEX IF NOT EXISTS comentarios_post_idx ON comentarios (post_id);
+
+CREATE TABLE IF NOT EXISTS encontros (
+  id             SERIAL PRIMARY KEY,
+  organizador_id INTEGER      NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  tipo           VARCHAR(20)  NOT NULL CHECK (tipo IN ('batalha', 'troca', 'torneio', 'anime', 'papo')),
+  titulo         VARCHAR(80)  NOT NULL CHECK (char_length(titulo) >= 3),
+  descricao      TEXT         NOT NULL DEFAULT '' CHECK (char_length(descricao) <= 1000),
+  data_hora      TIMESTAMPTZ  NOT NULL,
+  local          VARCHAR(160) NOT NULL CHECK (char_length(local) >= 3),
+  cidade         VARCHAR(60)  NOT NULL CHECK (char_length(cidade) >= 2),
+  vagas          INTEGER      CHECK (vagas BETWEEN 2 AND 500),
+  criado_em      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS encontros_data_hora_idx ON encontros (data_hora);
+
+CREATE TABLE IF NOT EXISTS encontro_participantes (
+  encontro_id INTEGER     NOT NULL REFERENCES encontros(id) ON DELETE CASCADE,
+  usuario_id  INTEGER     NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  criado_em   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (encontro_id, usuario_id)
+);
+
+CREATE INDEX IF NOT EXISTS encontro_participantes_usuario_idx ON encontro_participantes (usuario_id);
