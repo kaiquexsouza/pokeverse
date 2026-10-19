@@ -815,34 +815,6 @@ section[id] {
   font-size: 1.125rem;
 }
 
-.socials {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.social {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.5rem;
-  background: #1f2937;
-  color: #9ca3af;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-
-.social:hover {
-  background: #374151;
-  color: #fff;
-}
-
-.social svg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
 .copyright {
   font-size: 0.75rem;
   color: #4b5563;
