@@ -9,6 +9,8 @@ Pokeverse é um projeto de uma comunidade/fraternidade universitária web voltad
   - **Animes:** linhas de velocidade, retícula de mangá e posts como quadros de mangá
   - **Trading Cards:** posts como cartas (moldura amarela, curtidas viram HP, brilho holográfico)
   - **Assuntos Gerais:** visual de Pokédex, com cada post numerado como uma entrada (Nº 0012)
+- Laterais do feed (telas grandes) com destaques mais curtidos, treinadores mais ativos, próximos encontros
+  ligados à categoria e status da categoria, cada uma com o visual do tema (`public/feed-laterais.js`)
 - Criar posts com texto e/ou imagem, curtir/descurtir, comentar e apagar os próprios posts
 - Feed avisa quando chegam posts novos (confere a cada 20 s)
 - Contagem regressiva para o lançamento (5 de novembro)
@@ -31,7 +33,7 @@ Pokeverse é um projeto de uma comunidade/fraternidade universitária web voltad
 
 ## Estrutura
 ```
-public/            site (index.html, feed.html, encontros.html, style.css, app.js, script.js, feed.js, encontros.js)
+public/            site (index.html, feed.html, encontros.html, style.css, app.js, script.js, feed.js, feed-laterais.js, encontros.js)
 server/index.js    servidor Express (serve o site e a API)
 server/db.js       conexão com o PostgreSQL
 server/auth.js     geração/validação do token de login

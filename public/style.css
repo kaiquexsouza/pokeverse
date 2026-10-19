@@ -3312,6 +3312,7 @@ body[data-tema="jogos"] .lateral-titulo {
   font-size: 0.5625rem;
   letter-spacing: 0;
   line-height: 1.7;
+  text-transform: none;
 }
 
 body[data-tema="jogos"] .lateral-titulo::before {
