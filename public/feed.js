@@ -14,11 +14,16 @@ const ICONES = {
 
 const TAMANHO_MAXIMO_IMAGEM = 1080;
 const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const TAMANHO_MAXIMO_ARQUIVO = 15 * 1024 * 1024;
 
 function comprimirImagem(arquivo) {
   return new Promise((resolve, reject) => {
     if (!TIPOS_IMAGEM.includes(arquivo.type)) {
       reject(new Error('Escolha uma imagem JPG, PNG, WEBP ou GIF.'));
+      return;
+    }
+    if (arquivo.size > TAMANHO_MAXIMO_ARQUIVO) {
+      reject(new Error('Essa imagem é muito grande. Escolha uma de até 15 MB.'));
       return;
     }
 
@@ -74,6 +79,14 @@ const tabs = document.getElementById('tabs');
 const composer = document.getElementById('composer');
 const listaPosts = document.getElementById('posts');
 const statusFeed = document.getElementById('feed-status');
+const INTERVALO_NOVIDADES = 20000;
+
+let maiorId = 0;
+let postsNovos = [];
+const idsNaTela = new Set();
+let listaPronta = false;
+const avisoNovos = el('button', { type: 'button', class: 'feed-novos', hidden: true, onclick: mostrarPostsNovos });
+listaPosts.before(avisoNovos);
 
 let categoriaAtual = new URLSearchParams(location.search).get('categoria');
 if (!CATEGORIAS[categoriaAtual]) categoriaAtual = '';
@@ -132,8 +145,6 @@ function renderizarComposer() {
         el('div', { class: 'composer-botoes' }, [
           el('button', { type: 'button', class: 'btn btn-primary', text: 'Login', onclick: App.abrirLogin }),
           el('a', { href: 'index.html#entrar', class: 'btn btn-outline', text: 'Criar conta' }),
-          // PROVISÓRIO: acesso sem login
-          el('button', { type: 'button', class: 'btn btn-outline', text: 'Entrar sem login', onclick: App.entrarSemLogin }),
         ]),
       ])
     );
@@ -228,6 +239,7 @@ function renderizarComposer() {
             trocarCategoria(post.categoria);
           } else {
             mostrarStatus('');
+            idsNaTela.add(post.id);
             listaPosts.prepend(cartaoPost(post));
           }
         } catch (err) {
@@ -252,21 +264,66 @@ function renderizarComposer() {
 // ===== Lista de posts =====
 let carregamentoAtual = 0;
 
+function registrarPosts(posts) {
+  for (const post of posts) {
+    maiorId = Math.max(maiorId, post.id);
+    idsNaTela.add(post.id);
+  }
+}
+
+function atualizarAvisoNovos() {
+  const total = postsNovos.length;
+  avisoNovos.hidden = total === 0;
+  avisoNovos.textContent = total === 1 ? '↑ 1 post novo' : `↑ ${total} posts novos`;
+}
+
+function mostrarPostsNovos() {
+  if (!postsNovos.length) return;
+  registrarPosts(postsNovos);
+  mostrarStatus('');
+  listaPosts.prepend(...postsNovos.map(cartaoPost));
+  postsNovos = [];
+  atualizarAvisoNovos();
+  listaPosts.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function buscarNovidades() {
+  if (document.hidden || !listaPronta) return;
+  const meuCarregamento = carregamentoAtual;
+  const parametros = new URLSearchParams();
+  if (categoriaAtual) parametros.set('categoria', categoriaAtual);
+  if (maiorId) parametros.set('depois', maiorId);
+
+  try {
+    const posts = await api(`/posts?${parametros}`);
+    if (meuCarregamento !== carregamentoAtual) return;
+    postsNovos = posts.filter((post) => !idsNaTela.has(post.id));
+    atualizarAvisoNovos();
+  } catch {}
+}
+
 async function carregarPosts() {
   const meuCarregamento = ++carregamentoAtual;
   listaPosts.replaceChildren();
+  maiorId = 0;
+  idsNaTela.clear();
+  listaPronta = false;
+  postsNovos = [];
+  atualizarAvisoNovos();
   mostrarStatus('Carregando posts…');
 
   try {
     const query = categoriaAtual ? `?categoria=${categoriaAtual}` : '';
     const posts = await api(`/posts${query}`);
     if (meuCarregamento !== carregamentoAtual) return; // usuário trocou de aba no meio
+    listaPronta = true;
 
     if (posts.length === 0) {
       mostrarStatus('Nenhum post por aqui ainda. Que tal ser o primeiro?');
       return;
     }
     mostrarStatus('');
+    registrarPosts(posts);
     listaPosts.append(...posts.map(cartaoPost));
   } catch (err) {
     if (meuCarregamento === carregamentoAtual) mostrarStatus(err.message);
@@ -452,6 +509,9 @@ document.addEventListener('sessao', () => {
   renderizarComposer();
   carregarPosts();
 });
+
+document.addEventListener('visibilitychange', buscarNovidades);
+setInterval(buscarNovidades, INTERVALO_NOVIDADES);
 
 atualizarAbas();
 renderizarComposer();

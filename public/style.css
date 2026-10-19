@@ -1427,61 +1427,6 @@ a.cat-card {
   }
 }
 
-/* ===== PROVISÓRIO: botão "Entrar sem login" ===== */
-.btn-visitante {
-  border: 1px solid rgb(255 255 255 / 0.6);
-  color: #fff;
-  padding: 0.3125rem 0.875rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 700;
-  transition: background-color 0.15s;
-}
-
-.btn-visitante:hover {
-  background: rgb(255 255 255 / 0.15);
-}
-
-.btn-visitante .texto-longo {
-  display: none;
-}
-
-.composer-botoes {
-  flex-wrap: wrap;
-}
-
-/* Com 3 botões, o convite do feed fica em coluna (texto em cima, botões embaixo) */
-.composer-convite {
-  flex-direction: column !important;
-  align-items: flex-start !important;
-}
-
-/* No celular, deslogado, não cabe tudo no header: esconde o link "Feed" */
-@media (max-width: 639px) {
-  .nav:has(.btn-visitante) .nav-link-feed {
-    display: none;
-  }
-}
-
-@media (min-width: 640px) {
-  .btn-visitante .texto-longo {
-    display: inline;
-  }
-
-  .btn-visitante .texto-curto {
-    display: none;
-  }
-}
-
-.demo-aviso {
-  padding: 8px 16px;
-  background-color: #FFFBEB;
-  border-bottom: 1px solid #FDE68A;
-  color: #92400E;
-  font-size: 0.85rem;
-  text-align: center;
-}
-
 .btn-imagem {
   display: inline-flex;
   align-items: center;
@@ -1750,4 +1695,29 @@ a.cat-card {
   .launch-ball {
     animation: none;
   }
+}
+
+.feed-novos {
+  position: sticky;
+  top: 5rem;
+  z-index: 5;
+  display: block;
+  margin: 0 auto 1rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 10px 15px -3px rgb(37 99 235 / 0.3);
+  animation: fade-in 0.2s ease;
+  transition: background-color 0.15s;
+}
+
+.feed-novos:hover {
+  background: #1d4ed8;
+}
+
+.feed-novos[hidden] {
+  display: none;
 }

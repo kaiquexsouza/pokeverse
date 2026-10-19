@@ -63,15 +63,6 @@ const App = (() => {
 
   // ===== API =====
   async function api(caminho, { metodo = 'GET', corpo } = {}) {
-    if (typeof Demo !== 'undefined') {
-      try {
-        return Demo.responder(metodo, caminho, corpo, token);
-      } catch (err) {
-        if (err.status === 401 && token) sair();
-        throw err;
-      }
-    }
-
     const headers = {};
     if (corpo !== undefined) headers['Content-Type'] = 'application/json';
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -172,24 +163,7 @@ const App = (() => {
         el('button', { type: 'button', class: 'btn-login', text: 'Sair', onclick: sair })
       );
     } else {
-      area.append(
-        // PROVISÓRIO: acesso sem login
-        el('button', { type: 'button', class: 'btn-visitante', title: 'Entrar como visitante', onclick: entrarSemLogin }, [
-          el('span', { class: 'texto-longo', text: 'Entrar sem login' }),
-          el('span', { class: 'texto-curto', text: 'Visitante' }),
-        ]),
-        el('button', { type: 'button', class: 'btn-login', text: 'Login', onclick: abrirLogin })
-      );
-    }
-  }
-
-  // ===== PROVISÓRIO: acesso sem login (entra na conta compartilhada "visitante") =====
-  async function entrarSemLogin() {
-    try {
-      salvarSessao(await api('/auth/visitante', { metodo: 'POST' }));
-      fecharLogin();
-    } catch (err) {
-      alert(err.message);
+      area.append(el('button', { type: 'button', class: 'btn-login', text: 'Login', onclick: abrirLogin }));
     }
   }
 
@@ -254,11 +228,6 @@ const App = (() => {
           'Ainda não tem conta? ',
           el('a', { href: 'index.html#entrar', class: 'link', text: 'Cadastre-se', onclick: fecharLogin }),
         ]),
-        // PROVISÓRIO: acesso sem login
-        el('p', { class: 'form-terms' }, [
-          'ou ',
-          el('button', { type: 'button', class: 'link', text: 'entre sem login', onclick: entrarSemLogin }),
-        ]),
       ]
     );
 
@@ -318,7 +287,6 @@ const App = (() => {
     salvarSessao,
     sair,
     abrirLogin,
-    entrarSemLogin, // PROVISÓRIO
     get usuario() {
       return usuario;
     },

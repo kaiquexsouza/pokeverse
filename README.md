@@ -5,7 +5,16 @@ Pokeverse é um projeto de uma comunidade/fraternidade universitária web voltad
 - Cadastro (nome de usuário, e-mail e senha) e login com nome de usuário **ou** e-mail
 - Contador de membros e de posts vindo do banco
 - Feed com filtro por categoria (Jogos, Animes, Trading Cards, Assuntos Gerais)
-- Criar posts, curtir/descurtir, comentar e apagar os próprios posts
+- Criar posts com texto e/ou imagem, curtir/descurtir, comentar e apagar os próprios posts
+- Feed avisa quando chegam posts novos (confere a cada 20 s)
+- Contagem regressiva para o lançamento (5 de novembro)
+
+## Segurança
+- Senhas com bcrypt e sessão com JWT (`JWT_SECRET` gerado pelo Render)
+- Limite de tentativas: login, cadastro, posts, curtidas e comentários (`server/limites.js`)
+- Cabeçalhos de segurança com helmet (CSP, anti-clickjacking, nosniff)
+- Imagens: só JPG, PNG ou WEBP de até 1,5 MB, conferindo o conteúdo do arquivo
+- Consultas SQL parametrizadas e textos dos usuários exibidos sempre como texto (sem HTML)
 
 ## Tecnologias
 - **Front-end:** HTML, CSS e JavaScript puro (`public/`)
@@ -19,18 +28,11 @@ public/            site (index.html, feed.html, style.css, app.js, script.js, fe
 server/index.js    servidor Express (serve o site e a API)
 server/db.js       conexão com o PostgreSQL
 server/auth.js     geração/validação do token de login
+server/limites.js  limites de tentativas por IP/usuário
 server/routes/     rotas da API (auth.js, posts.js)
 server/schema.sql  tabelas: usuarios, posts, curtidas, comentarios
 render.yaml        configuração de deploy no Render
 ```
-
-## Modo demo (sem servidor e sem banco)
-Hoje o site está em **modo demo**: basta abrir o `public/index.html` no navegador (ou pelo Live Server).
-O `public/demo.js` imita a API e guarda cadastros e posts no `localStorage`, então o contador de
-membros/discussões sobe ao se cadastrar ou postar. Os dados ficam só naquele navegador
-(o botão "Zerar dados" no aviso do topo volta ao início), e o login não confere a senha.
-
-Para usar o servidor de verdade, remova a linha `<script src="demo.js"></script>` do `index.html` e do `feed.html`.
 
 ## Rodando localmente
 1. Instale o [Node.js](https://nodejs.org) 20+ e o PostgreSQL (o instalador já inclui o pgAdmin).
@@ -73,8 +75,9 @@ Observações do plano gratuito:
 | POST | `/api/auth/login` | | `{ login, senha }` (login = usuário ou e-mail) |
 | GET | `/api/auth/eu` | ✔ | dados do usuário logado |
 | GET | `/api/estatisticas` | | `{ membros, posts }` |
-| GET | `/api/posts?categoria=` | | lista posts (categoria opcional) |
-| POST | `/api/posts` | ✔ | `{ categoria, conteudo }` |
+| GET | `/api/posts?categoria=&depois=` | | lista posts (categoria opcional; `depois` = só ids maiores) |
+| POST | `/api/posts` | ✔ | `{ categoria, conteudo, imagem }` (imagem opcional, data URL) |
+| GET | `/api/posts/:id/imagem` | | imagem do post |
 | DELETE | `/api/posts/:id` | ✔ | apaga (só o autor) |
 | POST | `/api/posts/:id/curtir` | ✔ | curte/descurte |
 | GET | `/api/posts/:id/comentarios` | | lista comentários |

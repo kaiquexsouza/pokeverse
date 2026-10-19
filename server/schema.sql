@@ -23,6 +23,13 @@ CREATE TABLE IF NOT EXISTS posts (
 
 CREATE INDEX IF NOT EXISTS posts_criado_em_idx ON posts (criado_em DESC);
 
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS imagem BYTEA;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS imagem_tipo VARCHAR(20);
+ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_conteudo_check;
+ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_conteudo_ou_imagem;
+ALTER TABLE posts ADD CONSTRAINT posts_conteudo_ou_imagem
+  CHECK (char_length(conteudo) <= 1000 AND (char_length(conteudo) >= 1 OR imagem IS NOT NULL));
+
 CREATE TABLE IF NOT EXISTS curtidas (
   usuario_id INTEGER     NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
   post_id    INTEGER     NOT NULL REFERENCES posts(id) ON DELETE CASCADE,

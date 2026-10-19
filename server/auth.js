@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const db = require('./db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'segredo-de-desenvolvimento';
 
@@ -28,9 +29,14 @@ function lerUsuario(req) {
 }
 
 // Rotas que exigem login
-function exigirLogin(req, res, next) {
-  req.usuario = lerUsuario(req);
-  if (!req.usuario) return res.status(401).json({ erro: 'Faça login para continuar.' });
+async function exigirLogin(req, res, next) {
+  const doToken = lerUsuario(req);
+  if (!doToken) return res.status(401).json({ erro: 'Faça login para continuar.' });
+
+  const { rows } = await db.query('SELECT id, nome_usuario FROM usuarios WHERE id = $1', [doToken.id]);
+  if (!rows[0]) return res.status(401).json({ erro: 'Sua conta não foi encontrada. Faça login de novo.' });
+
+  req.usuario = rows[0];
   next();
 }
 
