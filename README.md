@@ -4,7 +4,11 @@ Pokeverse é um projeto de uma comunidade/fraternidade universitária web voltad
 ## Funcionalidades
 - Cadastro (nome de usuário, e-mail e senha) e login com nome de usuário **ou** e-mail
 - Contador de membros e de posts vindo do banco
-- Feed com filtro por categoria (Jogos, Animes, Trading Cards, Assuntos Gerais)
+- Feed com filtro por categoria (Jogos, Animes, Trading Cards, Assuntos Gerais), cada uma com visual próprio:
+  - **Jogos:** tela de Game Boy e posts como caixas de diálogo de RPG
+  - **Animes:** linhas de velocidade, retícula de mangá e posts como quadros de mangá
+  - **Trading Cards:** posts como cartas (moldura amarela, curtidas viram HP, brilho holográfico)
+  - **Assuntos Gerais:** visual de Pokédex, com cada post numerado como uma entrada (Nº 0012)
 - Criar posts com texto e/ou imagem, curtir/descurtir, comentar e apagar os próprios posts
 - Feed avisa quando chegam posts novos (confere a cada 20 s)
 - Contagem regressiva para o lançamento (5 de novembro)

@@ -7,7 +7,7 @@
   <meta name="description" content="Comunidade de fãs de Pokémon: jogos, animes, cards e muito mais." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Nunito:wght@400;500;600;700&family=Press+Start+2P&family=Bangers&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -39,12 +39,13 @@
   <main class="feed-page">
     <section class="feed-hero">
       <div class="hero-topbar"></div>
+      <div class="tema-arte" id="tema-arte" aria-hidden="true"></div>
       <div class="container feed-hero-inner">
-        <div class="pill pill-red">
+        <div class="pill pill-red" id="feed-pill">
           <span class="pulse-dot"></span>
           <span>Comunidade</span>
         </div>
-        <h1 class="feed-title font-outfit">O que os treinadores estão <span class="text-red">dizendo.</span></h1>
+        <h1 class="feed-title font-outfit" id="feed-titulo">O que os treinadores estão <span class="text-red">dizendo.</span></h1>
 
         <div class="tabs" role="tablist" id="tabs">
           <button type="button" class="tab" role="tab" data-categoria="">Todas</button>
@@ -56,12 +57,20 @@
       </div>
     </section>
 
-    <div class="container feed-container">
-      <!-- Caixa de novo post (preenchida pelo feed.js) -->
-      <div id="composer"></div>
+    <div class="feed-corpo">
+      <div class="feed-layout">
+        <aside class="feed-lateral feed-lateral-esquerda" id="lateral-esquerda" aria-label="Status da categoria"></aside>
 
-      <p class="feed-status" id="feed-status" hidden></p>
-      <div class="posts" id="posts"></div>
+        <div class="container feed-container">
+          <!-- Caixa de novo post (preenchida pelo feed.js) -->
+          <div id="composer"></div>
+
+          <p class="feed-status" id="feed-status" hidden></p>
+          <div class="posts" id="posts"></div>
+        </div>
+
+        <aside class="feed-lateral feed-lateral-direita" id="lateral-direita" aria-label="Destaques, encontros e treinadores"></aside>
+      </div>
     </div>
   </main>
 
@@ -107,6 +116,7 @@
   </footer>
 
   <script src="app.js"></script>
+  <script src="feed-laterais.js"></script>
   <script src="feed.js"></script>
 </body>
 </html>

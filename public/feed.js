@@ -73,6 +73,26 @@ function fecharImagem() {
   document.body.classList.remove('sem-rolagem');
 }
 
+const TEMAS = {
+  '': { selo: 'Comunidade', titulo: 'O que os treinadores estão ', destaque: 'dizendo.' },
+  jogos: { selo: 'Jogos Pokémon', titulo: 'Um treinador selvagem ', destaque: 'quer conversar!' },
+  animes: { selo: 'EP. 02 · Animes', titulo: 'A jornada ', destaque: 'continua!' },
+  cards: { selo: 'Trading Cards', titulo: 'Mostre suas ', destaque: 'melhores cartas!' },
+  gerais: { selo: 'Pokédex da comunidade', titulo: 'Registrando ', destaque: 'assuntos gerais…' },
+};
+
+const ARTES = {
+  jogos: () => [
+    el('div', { class: 'gb-cruz' }),
+    el('div', { class: 'gb-botoes' }, [el('span', { text: 'B' }), el('span', { text: 'A' })]),
+  ],
+  cards: () => [el('div', { class: 'carta-verso' }), el('div', { class: 'carta-verso' }), el('div', { class: 'carta-verso' })],
+  gerais: () => [el('div', { class: 'dex-lente' }), el('div', { class: 'dex-luzes' }, [el('span'), el('span'), el('span')])],
+};
+
+const feedPill = document.getElementById('feed-pill');
+const feedTitulo = document.getElementById('feed-titulo');
+const temaArte = document.getElementById('tema-arte');
 const tabs = document.getElementById('tabs');
 const composer = document.getElementById('composer');
 const listaPosts = document.getElementById('posts');
@@ -82,6 +102,7 @@ const INTERVALO_NOVIDADES = 20000;
 let maiorId = 0;
 let postsNovos = [];
 const idsNaTela = new Set();
+const postsNaLista = new Map();
 let listaPronta = false;
 const avisoNovos = el('button', { type: 'button', class: 'feed-novos', hidden: true, onclick: mostrarPostsNovos });
 listaPosts.before(avisoNovos);
@@ -109,10 +130,24 @@ tabs.addEventListener('click', (evento) => {
   trocarCategoria(aba.dataset.categoria);
 });
 
+function aplicarTema() {
+  const tema = TEMAS[categoriaAtual];
+  document.body.dataset.tema = categoriaAtual || 'padrao';
+  feedPill.replaceChildren(el('span', { class: 'pulse-dot' }), el('span', { text: tema.selo }));
+  feedTitulo.replaceChildren(tema.titulo, el('span', { class: 'text-red', text: tema.destaque }));
+  temaArte.replaceChildren(...(ARTES[categoriaAtual] ? ARTES[categoriaAtual]() : []));
+  Laterais.trocarCategoria(categoriaAtual);
+}
+
+function atualizarLaterais() {
+  Laterais.definirPosts([...postsNaLista.values()]);
+}
+
 function trocarCategoria(categoria) {
   categoriaAtual = categoria;
   const url = categoria ? `?categoria=${categoria}` : location.pathname;
   history.replaceState(null, '', url);
+  aplicarTema();
   atualizarAbas();
   renderizarComposer();
   carregarPosts();
@@ -295,6 +330,8 @@ async function carregarPosts() {
   listaPosts.replaceChildren();
   maiorId = 0;
   idsNaTela.clear();
+  postsNaLista.clear();
+  atualizarLaterais();
   listaPronta = false;
   postsNovos = [];
   atualizarAvisoNovos();
@@ -321,9 +358,12 @@ async function carregarPosts() {
 function cartaoPost(post) {
   const categoria = CATEGORIAS[post.categoria];
   const meu = App.usuario && App.usuario.id === post.autor_id;
+  postsNaLista.set(post.id, post);
+  atualizarLaterais();
 
   // Curtir
   const totalCurtidas = el('span', { text: post.curtidas });
+  const valorHp = el('span', { text: post.curtidas * 10 });
   const botaoCurtir = el('button', { type: 'button', class: 'acao acao-curtir', 'aria-pressed': post.curtido }, [
     icone(ICONES.coracao),
     totalCurtidas,
@@ -337,6 +377,10 @@ function cartaoPost(post) {
       botaoCurtir.classList.toggle('ativo', curtido);
       botaoCurtir.setAttribute('aria-pressed', curtido);
       totalCurtidas.textContent = curtidas;
+      valorHp.textContent = curtidas * 10;
+      post.curtidas = curtidas;
+      post.curtido = curtido;
+      atualizarLaterais();
     } catch (err) {
       alert(err.message);
     } finally {
@@ -358,7 +402,10 @@ function cartaoPost(post) {
     botaoComentar.setAttribute('aria-expanded', !areaComentarios.hidden);
     if (!areaComentarios.hidden && !comentariosCarregados) {
       comentariosCarregados = true;
-      await carregarComentarios(post.id, areaComentarios, totalComentarios);
+      await carregarComentarios(post.id, areaComentarios, totalComentarios, () => {
+        post.comentarios += 1;
+        atualizarLaterais();
+      });
     }
   });
 
@@ -369,10 +416,11 @@ function cartaoPost(post) {
       icone(ICONES.lixeira),
     ]);
 
-  const cartao = el('article', { class: 'post' }, [
+  const cartao = el('article', { class: 'post', id: `post-${post.id}` }, [
     el('header', { class: 'post-topo' }, [
       avatar(post.autor),
       el('div', { class: 'post-info' }, [
+        el('span', { class: 'post-numero', text: `Nº ${String(post.id).padStart(4, '0')}` }),
         el('span', { class: 'post-autor', text: `@${post.autor}` }),
         el('time', {
           class: 'post-tempo',
@@ -386,6 +434,7 @@ function cartaoPost(post) {
         text: categoria.nome,
         style: { color: categoria.cor, backgroundColor: categoria.fundo },
       }),
+      el('span', { class: 'post-hp', title: 'HP = curtidas × 10' }, [el('small', { text: 'HP' }), valorHp, el('span', { class: 'post-energia', text: '⚡' })]),
       botaoApagar,
     ]),
     post.conteudo && el('p', { class: 'post-texto', text: post.conteudo }),
@@ -404,6 +453,8 @@ function cartaoPost(post) {
       try {
         await api(`/posts/${post.id}`, { metodo: 'DELETE' });
         cartao.remove();
+        postsNaLista.delete(post.id);
+        atualizarLaterais();
         if (!listaPosts.children.length) mostrarStatus('Nenhum post por aqui ainda. Que tal ser o primeiro?');
       } catch (err) {
         alert(err.message);
@@ -429,7 +480,7 @@ function itemComentario(comentario) {
   ]);
 }
 
-async function carregarComentarios(postId, area, totalComentarios) {
+async function carregarComentarios(postId, area, totalComentarios, aoComentar) {
   const lista = el('ul', { class: 'comentario-lista' });
   const aviso = el('p', { class: 'comentario-aviso', text: 'Carregando comentários…' });
   area.replaceChildren(lista, aviso);
@@ -478,6 +529,7 @@ async function carregarComentarios(postId, area, totalComentarios) {
             lista.append(itemComentario(comentario));
             aviso.hidden = true;
             totalComentarios.textContent = Number(totalComentarios.textContent) + 1;
+            aoComentar();
             campo.value = '';
           } catch (err) {
             alert(err.message);
@@ -501,6 +553,7 @@ document.addEventListener('sessao', () => {
 document.addEventListener('visibilitychange', buscarNovidades);
 setInterval(buscarNovidades, INTERVALO_NOVIDADES);
 
+aplicarTema();
 atualizarAbas();
 renderizarComposer();
 carregarPosts();
