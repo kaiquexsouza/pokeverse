@@ -19,6 +19,8 @@ services:
         generateValue: true
       - key: SITE_URL
         value: https://pokeverse-30es.onrender.com
+      - key: LAUNCH_AT
+        sync: false
       - key: LAUNCH_ADMIN_TOKEN
         generateValue: true
       # Preencha estas variáveis no painel do Render usando o seu provedor SMTP.

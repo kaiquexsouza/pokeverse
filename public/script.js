@@ -5,6 +5,8 @@ const success = document.getElementById('join-success');
 const successTitle = document.getElementById('success-title');
 const joinError = document.getElementById('join-error');
 const joinSubmit = document.getElementById('join-submit');
+const launchCountdown = document.getElementById('launch-countdown');
+const launchPill = document.querySelector('.pill-red span:last-child');
 
 // ===== Contadores (vêm do banco) =====
 // Anima o número do valor atual até o novo
@@ -35,6 +37,35 @@ async function carregarEstatisticas() {
     else cta.textContent = `${App.formatarNumero(membros)} pessoas já estão na lista de espera.`;
   } catch {
     // Sem servidor: mantém os textos padrão
+  }
+
+  async function carregarLancamento() {
+    try {
+      const { launchAt, launched } = await App.api('/lancamento');
+      if (!launchAt) {
+        launchCountdown.textContent = 'Data em breve';
+        return;
+      }
+
+      const data = new Date(launchAt);
+      const atualizar = () => {
+        const restante = data.getTime() - Date.now();
+        if (restante <= 0 || launched) {
+          launchCountdown.textContent = 'Já estamos no ar!';
+          launchPill.textContent = 'Comunidade lançada';
+          return;
+        }
+        const dias = Math.floor(restante / 86400000);
+        const horas = Math.floor((restante % 86400000) / 3600000);
+        const minutos = Math.floor((restante % 3600000) / 60000);
+        const segundos = Math.floor((restante % 60000) / 1000);
+        launchCountdown.textContent = `${dias}d ${horas}h ${minutos}min ${segundos}s`;
+      };
+      atualizar();
+      setInterval(atualizar, 1000);
+    } catch {
+      launchCountdown.textContent = 'Data em breve';
+    }
   }
 }
 
@@ -82,6 +113,7 @@ form.addEventListener('submit', async (event) => {
 document.addEventListener('sessao', () => {
   atualizarTela();
   carregarEstatisticas();
+  carregarLancamento();
 });
 
 atualizarTela();

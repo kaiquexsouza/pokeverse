@@ -3,7 +3,7 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const db = require('./db');
-const authRoutes = require('./routes/auth');
+const { router: authRoutes, iniciarAgendamentoLancamento } = require('./routes/auth');
 const postRoutes = require('./routes/posts');
 
 const app = express();
@@ -21,6 +21,14 @@ app.get('/api/estatisticas', async (req, res) => {
             (SELECT COUNT(*) FROM posts)::int    AS posts`
   );
   res.json(rows[0]);
+});
+
+app.get('/api/lancamento', (req, res) => {
+  const lancamento = process.env.LAUNCH_AT ? new Date(process.env.LAUNCH_AT) : null;
+  res.json({
+    launchAt: lancamento && !Number.isNaN(lancamento.getTime()) ? lancamento.toISOString() : null,
+    launched: Boolean(lancamento && lancamento <= new Date()),
+  });
 });
 
 app.get('/api/saude', (req, res) => res.json({ ok: true }));
@@ -41,6 +49,7 @@ app.use((err, req, res, next) => {
 
 db.initDb()
   .then(() => {
+    iniciarAgendamentoLancamento();
     app.listen(PORT, () => console.log(`Pokeverse rodando em http://localhost:${PORT}`));
   })
   .catch((err) => {

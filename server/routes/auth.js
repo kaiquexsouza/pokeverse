@@ -10,6 +10,8 @@ const router = express.Router();
 const NOME_USUARIO_VALIDO = /^[a-zA-Z0-9_.]{3,20}$/;
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const URL_SITE = process.env.SITE_URL || 'http://localhost:3000';
+const DATA_LANCAMENTO = process.env.LAUNCH_AT ? new Date(process.env.LAUNCH_AT) : null;
+let envioEmAndamento = false;
 
 function escaparHtml(valor) {
   return valor.replace(/[&<>"']/g, (caractere) => ({
@@ -141,6 +143,46 @@ router.post('/pre-cadastro/finalizar', async (req, res) => {
   }
 });
 
+async function notificarLancamento() {
+  if (envioEmAndamento) return { enviados: 0 };
+  if (!DATA_LANCAMENTO || DATA_LANCAMENTO > new Date()) return { enviados: 0 };
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error('Configure SMTP_HOST, SMTP_USER e SMTP_PASS antes de enviar os convites.');
+  }
+
+  envioEmAndamento = true;
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+    const { rows } = await db.query(
+      'SELECT id, nome_completo, email FROM pre_cadastros WHERE convidado_em IS NULL ORDER BY id'
+    );
+    for (const interessado of rows) {
+      const token = crypto.randomBytes(32).toString('hex');
+      const link = `${URL_SITE}/cadastro.html?token=${token}`;
+      const nome = escaparHtml(interessado.nome_completo);
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: interessado.email,
+        subject: 'O Pokeverse foi lançado! Finalize seu cadastro',
+        text: `Olá, ${interessado.nome_completo}! Finalize seu cadastro no Pokeverse: ${link}`,
+        html: `<p>Olá, ${nome}!</p><p>O Pokeverse foi lançado. Finalize seu cadastro pelo link abaixo:</p><p><a href="${link}">Criar minha conta</a></p>`,
+      });
+      await db.query(
+        'UPDATE pre_cadastros SET token_convite = $1, convidado_em = NOW() WHERE id = $2',
+        [token, interessado.id]
+      );
+    }
+    return { enviados: rows.length };
+  } finally {
+    envioEmAndamento = false;
+  }
+}
+
 router.post('/notificar-lancamento', async (req, res) => {
   if (!process.env.LAUNCH_ADMIN_TOKEN || req.get('x-launch-token') !== process.env.LAUNCH_ADMIN_TOKEN) {
     return res.status(401).json({ erro: 'Não autorizado.' });
@@ -148,33 +190,7 @@ router.post('/notificar-lancamento', async (req, res) => {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     return res.status(503).json({ erro: 'Configure SMTP_HOST, SMTP_USER e SMTP_PASS antes de enviar os convites.' });
   }
-
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
-  const { rows } = await db.query(
-    'SELECT id, nome_completo, email FROM pre_cadastros WHERE convidado_em IS NULL ORDER BY id'
-  );
-  for (const interessado of rows) {
-    const token = crypto.randomBytes(32).toString('hex');
-    const link = `${URL_SITE}/cadastro.html?token=${token}`;
-    const nome = escaparHtml(interessado.nome_completo);
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: interessado.email,
-      subject: 'O Pokeverse foi lançado! Finalize seu cadastro',
-      text: `Olá, ${interessado.nome_completo}! Finalize seu cadastro no Pokeverse: ${link}`,
-      html: `<p>Olá, ${nome}!</p><p>O Pokeverse foi lançado. Finalize seu cadastro pelo link abaixo:</p><p><a href="${link}">Criar minha conta</a></p>`,
-    });
-    await db.query(
-      'UPDATE pre_cadastros SET token_convite = $1, convidado_em = NOW() WHERE id = $2',
-      [token, interessado.id]
-    );
-  }
-  res.json({ enviados: rows.length });
+  res.json(await notificarLancamento());
 });
 
 // POST /api/auth/login  { login, senha }  (login = nome de usuário ou e-mail)
@@ -239,4 +255,19 @@ router.get('/eu', exigirLogin, async (req, res) => {
   res.json(rows[0]);
 });
 
-module.exports = router;
+function iniciarAgendamentoLancamento() {
+  if (!DATA_LANCAMENTO || Number.isNaN(DATA_LANCAMENTO.getTime())) return;
+  const verificar = async () => {
+    if (new Date() < DATA_LANCAMENTO) return;
+    try {
+      const resultado = await notificarLancamento();
+      if (resultado.enviados) console.log(`Convites de lançamento enviados: ${resultado.enviados}.`);
+    } catch (err) {
+      console.error('Não foi possível enviar os convites de lançamento:', err.message);
+    }
+  };
+  verificar();
+  setInterval(verificar, 60_000);
+}
+
+module.exports = { router, iniciarAgendamentoLancamento };

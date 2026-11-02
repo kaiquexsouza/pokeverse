@@ -8,8 +8,9 @@ plataforma for liberada.
 ## Funcionalidades
 
 - Landing page de lançamento com status da comunidade e contador de interessados.
+- Contador regressivo até a data/hora oficial de lançamento.
 - Pré-cadastro com nome completo e e-mail, sem criação de senha.
-- Envio de convite por e-mail no lançamento.
+- Envio automático dos convites quando o contador chega a zero.
 - Página de conclusão do cadastro acessada por link exclusivo.
 - Cadastro real com nome de usuário e senha.
 - Login com nome de usuário ou e-mail.
@@ -84,6 +85,7 @@ usar apenas um Live Server não fornece a API nem o PostgreSQL.
 | `NODE_ENV` | Recomendada | Use `production` no Render |
 | `PORT` | Não | Porta do servidor; o Render fornece automaticamente |
 | `SITE_URL` | Recomendada | URL pública usada nos links dos convites |
+| `LAUNCH_AT` | Para contador e automação | Data/hora do lançamento em ISO 8601 UTC |
 | `LAUNCH_ADMIN_TOKEN` | Para convites | Protege a rota de disparo dos e-mails |
 | `SMTP_HOST` | Para convites | Host do provedor de e-mail |
 | `SMTP_PORT` | Para convites | Normalmente `587` |
@@ -127,6 +129,7 @@ Adicione:
 
 ```text
 SITE_URL=https://pokeverse-30es.onrender.com
+LAUNCH_AT=2026-12-01T18:00:00.000Z
 LAUNCH_ADMIN_TOKEN=<um-token-aleatorio-e-secreto>
 SMTP_HOST=<host-do-seu-provedor>
 SMTP_PORT=587
@@ -142,6 +145,12 @@ incluindo `https://`, sem barra no final.
 
 As variáveis de SMTP não são necessárias para receber pré-cadastros. Elas só
 precisam estar preenchidas antes de executar o disparo dos convites.
+
+`LAUNCH_AT` é a data/hora oficial do lançamento em UTC. A landing page exibe
+o contador regressivo calculado no navegador. Quando o horário chega, o
+servidor verifica automaticamente os pré-cadastros pendentes e envia os
+convites usando SMTP. Se o SMTP estiver indisponível, o servidor tenta
+novamente a cada minuto enquanto permanecer ativo.
 
 ### 3. Salvar e redeployar
 
@@ -177,7 +186,7 @@ curl -X POST https://pokeverse-30es.onrender.com/api/auth/notificar-lancamento \
   -H "X-Launch-Token: SEU_LAUNCH_ADMIN_TOKEN"
 ```
 
-A rota envia apenas registros ainda não convidados. Cada registro é marcado
+A rota manual só envia depois que `LAUNCH_AT` chega e envia apenas registros ainda não convidados. Cada registro é marcado
 como enviado somente depois que o SMTP confirma o envio. Se o SMTP falhar,
 ele poderá ser tentado novamente.
 
