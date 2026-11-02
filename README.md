@@ -1,83 +1,222 @@
-# pokeverse
-Pokeverse é um projeto de uma comunidade/fraternidade universitária web voltada para fãs de Pokémon que desejam se conectar, compartilhar paixões e aprender juntos. Participando de encontros marcados na página
+# Pokeverse
+
+Pokeverse é uma comunidade para fãs de Pokémon, com conteúdo sobre jogos,
+animes, cards e assuntos gerais. Atualmente o site está em fase de lançamento:
+visitantes fazem um pré-cadastro e recebem um convite por e-mail quando a
+plataforma for liberada.
 
 ## Funcionalidades
-- Cadastro (nome de usuário, e-mail e senha) e login com nome de usuário **ou** e-mail
-- Contador de membros e de posts vindo do banco
-- Feed com filtro por categoria (Jogos, Animes, Trading Cards, Assuntos Gerais)
-- Criar posts, curtir/descurtir, comentar e apagar os próprios posts
+
+- Landing page de lançamento com status da comunidade e contador de interessados.
+- Pré-cadastro com nome completo e e-mail, sem criação de senha.
+- Envio de convite por e-mail no lançamento.
+- Página de conclusão do cadastro acessada por link exclusivo.
+- Cadastro real com nome de usuário e senha.
+- Login com nome de usuário ou e-mail.
+- Feed com filtros por categoria: Jogos, Animes, Trading Cards e Assuntos Gerais.
+- Criação, curtida, remoção dos próprios posts e comentários.
 
 ## Tecnologias
-- **Front-end:** HTML, CSS e JavaScript puro (`public/`)
-- **Back-end:** Node.js + Express (`server/`)
-- **Banco:** PostgreSQL (tabelas em `server/schema.sql`, criadas automaticamente ao iniciar)
-- **Senhas:** bcrypt · **Sessão:** JWT
+
+- **Front-end:** HTML, CSS e JavaScript puro em [`public/`](./public/).
+- **Back-end:** Node.js + Express em [`server/`](./server/).
+- **Banco:** PostgreSQL.
+- **Senhas:** bcrypt.
+- **Sessão:** JWT.
+- **E-mail:** Nodemailer com SMTP.
+- **Deploy:** Render, configurado em [`render.yaml`](./render.yaml).
 
 ## Estrutura
-```
-public/            site (index.html, feed.html, style.css, app.js, script.js, feed.js)
-server/index.js    servidor Express (serve o site e a API)
-server/db.js       conexão com o PostgreSQL
-server/auth.js     geração/validação do token de login
-server/routes/     rotas da API (auth.js, posts.js)
-server/schema.sql  tabelas: usuarios, posts, curtidas, comentarios
-render.yaml        configuração de deploy no Render
+
+```text
+public/index.html       landing page e pré-cadastro
+public/script.js        contador e envio do pré-cadastro
+public/cadastro.html    página de cadastro real por convite
+public/cadastro.js      validação do convite e criação da conta
+public/feed.html        feed da comunidade
+public/app.js           API, sessão, header e modal de login
+server/index.js         servidor Express e inicialização do banco
+server/routes/auth.js   cadastro, login, pré-cadastro e convites
+server/routes/posts.js  posts, curtidas e comentários
+server/schema.sql       tabelas criadas automaticamente
+render.yaml             Blueprint do Render
 ```
 
-## Modo demo (sem servidor e sem banco)
-Hoje o site está em **modo demo**: basta abrir o `public/index.html` no navegador (ou pelo Live Server).
-O `public/demo.js` imita a API e guarda cadastros e posts no `localStorage`, então o contador de
-membros/discussões sobe ao se cadastrar ou postar. Os dados ficam só naquele navegador
-(o botão "Zerar dados" no aviso do topo volta ao início), e o login não confere a senha.
+## Banco de dados
 
-Para usar o servidor de verdade, remova a linha `<script src="demo.js"></script>` do `index.html` e do `feed.html`.
+Ao iniciar, o servidor executa [`server/schema.sql`](./server/schema.sql).
+As tabelas principais são:
+
+- `usuarios`: contas reais, com senha armazenada como hash.
+- `pre_cadastros`: interessados que ainda não criaram uma conta.
+- `posts`, `curtidas` e `comentarios`: conteúdo da comunidade.
+
+O pré-cadastro não cria uma conta em `usuarios` e não armazena senha.
 
 ## Rodando localmente
-1. Instale o [Node.js](https://nodejs.org) 20+ e o PostgreSQL (o instalador já inclui o pgAdmin).
-2. No **pgAdmin**: clique com o botão direito em *Databases → Create → Database…*, nome `pokeverse`.
-   Na aba *Definition*, deixe **Encoding = UTF8** (senão acentos dão erro).
-3. Copie `.env.example` para `.env` e coloque a senha do seu Postgres na `DATABASE_URL`.
-4. No terminal, na pasta do projeto:
+
+1. Instale o [Node.js 20+](https://nodejs.org) e o PostgreSQL.
+2. Crie um banco chamado `pokeverse`.
+3. Copie `.env.example` para `.env` e preencha `DATABASE_URL`.
+4. Na pasta do projeto, instale as dependências:
+
    ```bash
    npm install
+   ```
+
+5. Inicie o servidor:
+
+   ```bash
    npm run dev
    ```
-5. Acesse http://localhost:3000. As tabelas são criadas sozinhas na primeira execução.
 
-> O site precisa do servidor rodando. Abrir o `index.html` direto no navegador não carrega login nem posts.
+6. Abra <http://localhost:3000>.
+
+O site deve ser acessado pelo servidor Express. Abrir o HTML diretamente ou
+usar apenas um Live Server não fornece a API nem o PostgreSQL.
+
+## Variáveis de ambiente
+
+| Variável | Obrigatória | Finalidade |
+|---|---:|---|
+| `DATABASE_URL` | Sim | URL de conexão com o PostgreSQL |
+| `JWT_SECRET` | Sim em produção | Assinatura dos tokens de sessão |
+| `NODE_ENV` | Recomendada | Use `production` no Render |
+| `PORT` | Não | Porta do servidor; o Render fornece automaticamente |
+| `SITE_URL` | Recomendada | URL pública usada nos links dos convites |
+| `LAUNCH_ADMIN_TOKEN` | Para convites | Protege a rota de disparo dos e-mails |
+| `SMTP_HOST` | Para convites | Host do provedor de e-mail |
+| `SMTP_PORT` | Para convites | Normalmente `587` |
+| `SMTP_SECURE` | Para convites | `true` para SMTP TLS direto; `false` para STARTTLS |
+| `SMTP_USER` | Para convites | Usuário do SMTP |
+| `SMTP_PASS` | Para convites | Senha ou app password do SMTP |
+| `SMTP_FROM` | Não | Remetente; se vazio, usa `SMTP_USER` |
+
+Nunca coloque senhas, tokens SMTP ou `LAUNCH_ADMIN_TOKEN` no GitHub ou no
+`.env.example`.
 
 ## Deploy no Render
-1. Envie o código para o GitHub.
-2. No [Render](https://dashboard.render.com): **New → Blueprint** e selecione o repositório.
-   O `render.yaml` cria o site (`pokeverse`) e o banco (`pokeverse-db`), já conectados, e gera o `JWT_SECRET`.
-3. Clique em **Apply** e aguarde o deploy. A URL aparece no serviço `pokeverse` (ex.: `https://pokeverse.onrender.com`).
 
-Observações do plano gratuito:
-- O site "dorme" após ~15 min sem acesso; o primeiro acesso depois disso demora uns 30–50 s.
-- O PostgreSQL gratuito do Render tem prazo de validade. Confira a data no painel do banco.
+O projeto já está publicado como Web Service. Não é necessário criar outro
+serviço nem apagar o banco existente.
 
-## Acessando o banco do Render pelo pgAdmin
-1. No Render, abra o banco `pokeverse-db` → **Connect** → aba **External** e copie os dados.
-2. No pgAdmin: *Servers → Register → Server…*
-   - **General → Name:** `Pokeverse (Render)`
-   - **Connection → Host:** o host externo (ex.: `dpg-xxxxx-a.oregon-postgres.render.com`)
-   - **Port:** `5432` · **Maintenance database:** `pokeverse`
-   - **Username / Password:** os do Render
-   - **Parameters → SSL mode:** `require`
-3. As tabelas ficam em *pokeverse → Schemas → public → Tables*.
+### 1. Enviar o código atualizado
 
-## API
-| Método | Rota | Login? | Descrição |
+Faça commit e push das alterações para a mesma branch conectada ao serviço
+(na imagem, `main`). O Render fará o deploy automático se o Auto-Deploy estiver
+habilitado. Caso contrário, use **Manual Deploy → Deploy latest commit**.
+
+O serviço usa:
+
+```text
+Build Command: npm install
+Start Command: npm start
+Health Check: /api/saude
+```
+
+### 2. Atualizar as variáveis no Web Service existente
+
+No Render, abra o Web Service **pokeverse-30es** → **Environment** → **Edit**
+e mantenha as três variáveis atuais:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `NODE_ENV=production`
+
+Adicione:
+
+```text
+SITE_URL=https://pokeverse-30es.onrender.com
+LAUNCH_ADMIN_TOKEN=<um-token-aleatorio-e-secreto>
+SMTP_HOST=<host-do-seu-provedor>
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=<usuario-do-email>
+SMTP_PASS=<senha-ou-app-password>
+SMTP_FROM=<email-remetente>
+```
+
+Use **Generate** para criar `LAUNCH_ADMIN_TOKEN`, se essa opção aparecer.
+O valor de `SITE_URL` deve ser exatamente a URL pública atual do serviço,
+incluindo `https://`, sem barra no final.
+
+As variáveis de SMTP não são necessárias para receber pré-cadastros. Elas só
+precisam estar preenchidas antes de executar o disparo dos convites.
+
+### 3. Salvar e redeployar
+
+Clique em **Save Changes**. O Render normalmente inicia um novo deploy
+automaticamente. Se não iniciar, use **Manual Deploy → Deploy latest commit**.
+
+Depois, valide:
+
+```bash
+curl https://pokeverse-30es.onrender.com/api/saude
+```
+
+O retorno esperado é:
+
+```json
+{"ok":true}
+```
+
+Também faça um pré-cadastro de teste pela página pública e confirme que ele
+aparece no contador. Não execute o disparo de lançamento durante o teste.
+
+### 4. Configurar o SMTP
+
+Escolha um provedor SMTP e crie uma credencial própria para a aplicação.
+Quando o provedor exigir autenticação em dois fatores, use uma **app password**
+em `SMTP_PASS`, não a senha pessoal principal.
+
+Depois de salvar as variáveis e confirmar que o serviço está saudável, envie
+um convite de teste somente se houver um pré-cadastro de teste:
+
+```bash
+curl -X POST https://pokeverse-30es.onrender.com/api/auth/notificar-lancamento \
+  -H "X-Launch-Token: SEU_LAUNCH_ADMIN_TOKEN"
+```
+
+A rota envia apenas registros ainda não convidados. Cada registro é marcado
+como enviado somente depois que o SMTP confirma o envio. Se o SMTP falhar,
+ele poderá ser tentado novamente.
+
+> Essa rota deve ser executada apenas no lançamento. O token administrativo
+> nunca deve ser colocado no front-end.
+
+### Usando `render.yaml`
+
+O [`render.yaml`](./render.yaml) já declara as novas variáveis. Como o serviço
+atual é **Blueprint managed**, um push que altere esse arquivo pode solicitar
+sincronização do Blueprint no Render. Revise as mudanças antes de aplicar.
+
+Para um serviço já existente, a forma mais simples e segura é adicionar as
+variáveis manualmente pelo painel, conforme a seção anterior. Não altere
+`DATABASE_URL` nem recrie o banco.
+
+## Rotas da API
+
+| Método | Rota | Autenticação | Descrição |
 |---|---|---|---|
-| POST | `/api/auth/cadastro` | | `{ nome_usuario, email, senha }` |
-| POST | `/api/auth/login` | | `{ login, senha }` (login = usuário ou e-mail) |
-| GET | `/api/auth/eu` | ✔ | dados do usuário logado |
-| GET | `/api/estatisticas` | | `{ membros, posts }` |
-| GET | `/api/posts?categoria=` | | lista posts (categoria opcional) |
-| POST | `/api/posts` | ✔ | `{ categoria, conteudo }` |
-| DELETE | `/api/posts/:id` | ✔ | apaga (só o autor) |
-| POST | `/api/posts/:id/curtir` | ✔ | curte/descurte |
-| GET | `/api/posts/:id/comentarios` | | lista comentários |
-| POST | `/api/posts/:id/comentarios` | ✔ | `{ conteudo }` |
+| `POST` | `/api/auth/pre-cadastro` | Não | Salva `{ nome_completo, email }` |
+| `GET` | `/api/auth/pre-cadastro/:token` | Não | Valida o convite |
+| `POST` | `/api/auth/pre-cadastro/finalizar` | Não | Cria a conta com `{ token, nome_usuario, senha }` |
+| `POST` | `/api/auth/notificar-lancamento` | `X-Launch-Token` | Envia os convites pendentes |
+| `POST` | `/api/auth/cadastro` | Não | Cadastro legado direto |
+| `POST` | `/api/auth/login` | Não | Login por usuário/e-mail e senha |
+| `GET` | `/api/auth/eu` | Bearer JWT | Dados da sessão atual |
+| `GET` | `/api/estatisticas` | Não | Contador de interessados e posts |
+| `GET` | `/api/posts?categoria=` | Opcional | Lista posts |
+| `POST` | `/api/posts` | Bearer JWT | Cria um post |
+| `DELETE` | `/api/posts/:id` | Bearer JWT | Remove o próprio post |
+| `POST` | `/api/posts/:id/curtir` | Bearer JWT | Alterna curtida |
+| `GET` | `/api/posts/:id/comentarios` | Não | Lista comentários |
+| `POST` | `/api/posts/:id/comentarios` | Bearer JWT | Cria comentário |
 
-Rotas com login exigem o header `Authorization: Bearer <token>`.
+## Observações do plano gratuito
+
+- O Web Service pode dormir após um período sem acesso.
+- O primeiro acesso depois disso pode demorar.
+- O PostgreSQL gratuito do Render pode ter limitações ou prazo de validade;
+  confira as condições atuais no painel.
+- Faça backup antes de alterações importantes no banco.

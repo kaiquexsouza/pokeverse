@@ -15,9 +15,8 @@ form.addEventListener('submit', (event) => {
 
   const nome = form.nome.value.trim();
   const email = form.email.value.trim();
-  const matricula = form.matricula.value.trim();
 
-  if (!nome || !email || !matricula) return;
+  if (!nome || !email) return;
 
   form.hidden = true;
   success.hidden = false;

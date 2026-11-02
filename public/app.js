@@ -174,12 +174,7 @@ const App = (() => {
       );
     } else {
       area.append(
-        // PROVISÓRIO: acesso sem login
-        el('button', { type: 'button', class: 'btn-visitante', title: 'Entrar como visitante', onclick: entrarSemLogin }, [
-          el('span', { class: 'texto-longo', text: 'Entrar sem login' }),
-          el('span', { class: 'texto-curto', text: 'Visitante' }),
-        ]),
-        el('button', { type: 'button', class: 'btn-login', text: 'Login', onclick: abrirLogin })
+        el('a', { href: 'index.html#entrar', class: 'btn-login', text: 'Pré-cadastro' })
       );
     }
   }

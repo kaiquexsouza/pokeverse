@@ -17,7 +17,7 @@ app.use('/api/posts', postRoutes);
 
 app.get('/api/estatisticas', async (req, res) => {
   const { rows } = await db.query(
-    `SELECT (SELECT COUNT(*) FROM usuarios)::int AS membros,
+    `SELECT (SELECT COUNT(*) FROM pre_cadastros)::int AS membros,
             (SELECT COUNT(*) FROM posts)::int    AS posts`
   );
   res.json(rows[0]);

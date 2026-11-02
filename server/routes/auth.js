@@ -1,5 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const db = require('../db');
 const { gerarToken, exigirLogin } = require('../auth');
 
@@ -7,6 +9,13 @@ const router = express.Router();
 
 const NOME_USUARIO_VALIDO = /^[a-zA-Z0-9_.]{3,20}$/;
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_SITE = process.env.SITE_URL || 'http://localhost:3000';
+
+function escaparHtml(valor) {
+  return valor.replace(/[&<>"']/g, (caractere) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[caractere]));
+}
 
 function respostaComToken(usuario) {
   return {
@@ -17,10 +26,14 @@ function respostaComToken(usuario) {
 
 // POST /api/auth/cadastro  { nome_usuario, email, senha }
 router.post('/cadastro', async (req, res) => {
+  const nome_completo = String(req.body.nome_completo || '').trim();
   const nome_usuario = String(req.body.nome_usuario || '').trim();
   const email = String(req.body.email || '').trim().toLowerCase();
   const senha = String(req.body.senha || '');
 
+  if (nome_completo && (nome_completo.length < 2 || nome_completo.length > 120)) {
+    return res.status(400).json({ erro: 'Informe um nome completo válido.' });
+  }
   if (!NOME_USUARIO_VALIDO.test(nome_usuario)) {
     return res.status(400).json({ erro: 'Nome de usuário deve ter de 3 a 20 caracteres: letras, números, "_" ou ".".' });
   }
@@ -39,10 +52,10 @@ router.post('/cadastro', async (req, res) => {
 
   try {
     const { rows } = await db.query(
-      `INSERT INTO usuarios (nome_usuario, email, senha_hash)
-       VALUES ($1, $2, $3)
+      `INSERT INTO usuarios (nome_completo, nome_usuario, email, senha_hash)
+       VALUES ($1, $2, $3, $4)
        RETURNING id, nome_usuario, email`,
-      [nome_usuario, email, senha_hash]
+      [nome_completo || null, nome_usuario, email, senha_hash]
     );
     res.status(201).json(respostaComToken(rows[0]));
   } catch (err) {
@@ -52,6 +65,116 @@ router.post('/cadastro', async (req, res) => {
     }
     throw err;
   }
+});
+
+// POST /api/auth/pre-cadastro { nome_completo, email }
+router.post('/pre-cadastro', async (req, res) => {
+  const nome_completo = String(req.body.nome_completo || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+
+  if (nome_completo.length < 2 || nome_completo.length > 120) {
+    return res.status(400).json({ erro: 'Informe seu nome completo.' });
+  }
+  if (!EMAIL_VALIDO.test(email)) {
+    return res.status(400).json({ erro: 'Informe um e-mail válido.' });
+  }
+
+  try {
+    await db.query(
+      `INSERT INTO pre_cadastros (nome_completo, email)
+       VALUES ($1, $2)
+       ON CONFLICT ((LOWER(email))) DO UPDATE
+       SET nome_completo = EXCLUDED.nome_completo`,
+      [nome_completo, email]
+    );
+    res.status(201).json({ mensagem: 'Pré-cadastro confirmado.' });
+  } catch (err) {
+    throw err;
+  }
+});
+
+router.get('/pre-cadastro/:token', async (req, res) => {
+  const { rows } = await db.query(
+    `SELECT nome_completo, email
+       FROM pre_cadastros
+      WHERE token_convite = $1 AND convidado_em IS NOT NULL`,
+    [req.params.token]
+  );
+  if (!rows[0]) return res.status(404).json({ erro: 'Link de cadastro inválido ou expirado.' });
+  res.json(rows[0]);
+});
+
+router.post('/pre-cadastro/finalizar', async (req, res) => {
+  const token = String(req.body.token || '');
+  const nome_usuario = String(req.body.nome_usuario || '').trim();
+  const senha = String(req.body.senha || '');
+  const { rows: interessados } = await db.query(
+    `SELECT id, nome_completo, email
+       FROM pre_cadastros
+      WHERE token_convite = $1 AND convidado_em IS NOT NULL`,
+    [token]
+  );
+  const interessado = interessados[0];
+  if (!interessado) return res.status(404).json({ erro: 'Link de cadastro inválido ou expirado.' });
+  if (!NOME_USUARIO_VALIDO.test(nome_usuario)) {
+    return res.status(400).json({ erro: 'Nome de usuário deve ter de 3 a 20 caracteres: letras, números, "_" ou .'
+    });
+  }
+  if (senha.length < 6) return res.status(400).json({ erro: 'A senha deve ter pelo menos 6 caracteres.' });
+
+  const senha_hash = await bcrypt.hash(senha, 10);
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO usuarios (nome_completo, nome_usuario, email, senha_hash)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, nome_usuario, email`,
+      [interessado.nome_completo, nome_usuario, interessado.email, senha_hash]
+    );
+    await db.query('DELETE FROM pre_cadastros WHERE id = $1', [interessado.id]);
+    res.status(201).json(respostaComToken(rows[0]));
+  } catch (err) {
+    if (err.code === '23505') {
+      const campo = err.constraint === 'usuarios_email_unico' ? 'Este e-mail' : 'Este nome de usuário';
+      return res.status(409).json({ erro: `${campo} já está cadastrado.` });
+    }
+    throw err;
+  }
+});
+
+router.post('/notificar-lancamento', async (req, res) => {
+  if (!process.env.LAUNCH_ADMIN_TOKEN || req.get('x-launch-token') !== process.env.LAUNCH_ADMIN_TOKEN) {
+    return res.status(401).json({ erro: 'Não autorizado.' });
+  }
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    return res.status(503).json({ erro: 'Configure SMTP_HOST, SMTP_USER e SMTP_PASS antes de enviar os convites.' });
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  });
+  const { rows } = await db.query(
+    'SELECT id, nome_completo, email FROM pre_cadastros WHERE convidado_em IS NULL ORDER BY id'
+  );
+  for (const interessado of rows) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const link = `${URL_SITE}/cadastro.html?token=${token}`;
+    const nome = escaparHtml(interessado.nome_completo);
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: interessado.email,
+      subject: 'O Pokeverse foi lançado! Finalize seu cadastro',
+      text: `Olá, ${interessado.nome_completo}! Finalize seu cadastro no Pokeverse: ${link}`,
+      html: `<p>Olá, ${nome}!</p><p>O Pokeverse foi lançado. Finalize seu cadastro pelo link abaixo:</p><p><a href="${link}">Criar minha conta</a></p>`,
+    });
+    await db.query(
+      'UPDATE pre_cadastros SET token_convite = $1, convidado_em = NOW() WHERE id = $2',
+      [token, interessado.id]
+    );
+  }
+  res.json({ enviados: rows.length });
 });
 
 // POST /api/auth/login  { login, senha }  (login = nome de usuário ou e-mail)

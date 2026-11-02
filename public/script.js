@@ -1,4 +1,4 @@
-// Landing page: contador de membros e cadastro.
+// Landing page: contador de interessados e pré-cadastro.
 
 const form = document.getElementById('join-form');
 const success = document.getElementById('join-success');
@@ -30,9 +30,9 @@ async function carregarEstatisticas() {
     animarContador(document.getElementById('stat-posts'), posts);
 
     const cta = document.getElementById('cta-membros');
-    if (membros === 0) cta.textContent = 'Seja o primeiro treinador a entrar!';
-    else if (membros === 1) cta.textContent = '1 treinador já está esperando por você.';
-    else cta.textContent = `${App.formatarNumero(membros)} treinadores já estão esperando por você.`;
+    if (membros === 0) cta.textContent = 'Seja uma das primeiras pessoas a receber o convite.';
+    else if (membros === 1) cta.textContent = '1 pessoa já está na lista de espera.';
+    else cta.textContent = `${App.formatarNumero(membros)} pessoas já estão na lista de espera.`;
   } catch {
     // Sem servidor: mantém os textos padrão
   }
@@ -44,7 +44,7 @@ function atualizarTela() {
 
   form.hidden = Boolean(usuario);
   success.hidden = !usuario;
-  if (usuario) successTitle.textContent = `Bem-vindo, @${usuario.nome_usuario}!`;
+  if (usuario) successTitle.textContent = `Você já está na comunidade, @${usuario.nome_usuario}!`;
 
   // Botões de chamada: deslogado vai para o cadastro, logado vai para o feed
   document.querySelectorAll('[data-cta]').forEach((link) => {
@@ -58,28 +58,27 @@ form.addEventListener('submit', async (event) => {
   App.mostrarErro(joinError, '');
 
   joinSubmit.disabled = true;
-  joinSubmit.textContent = 'Criando conta…';
+  joinSubmit.textContent = 'Salvando seu interesse…';
 
   try {
-    const dados = await App.api('/auth/cadastro', {
+    await App.api('/auth/pre-cadastro', {
       metodo: 'POST',
       corpo: {
-        nome_usuario: form.nome_usuario.value.trim(),
+        nome_completo: form.nome_completo.value.trim(),
         email: form.email.value.trim(),
-        senha: form.senha.value,
       },
     });
     form.reset();
-    App.salvarSessao(dados);
+    form.hidden = true;
+    success.hidden = false;
   } catch (err) {
     App.mostrarErro(joinError, err.message);
   } finally {
     joinSubmit.disabled = false;
-    joinSubmit.textContent = 'Juntar-se à Comunidade';
+    joinSubmit.textContent = 'Quero ser avisado';
   }
 });
 
-document.getElementById('join-login').addEventListener('click', App.abrirLogin);
 document.addEventListener('sessao', () => {
   atualizarTela();
   carregarEstatisticas();
