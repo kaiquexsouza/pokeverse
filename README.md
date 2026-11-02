@@ -24,7 +24,7 @@ plataforma for liberada.
 - **Banco:** PostgreSQL.
 - **Senhas:** bcrypt.
 - **Sessão:** JWT.
-- **E-mail:** Nodemailer com SMTP.
+- **E-mail:** Gmail API com OAuth2 via HTTPS.
 - **Deploy:** Render, configurado em [`render.yaml`](./render.yaml).
 
 ## Estrutura
@@ -87,32 +87,47 @@ usar apenas um Live Server não fornece a API nem o PostgreSQL.
 | `SITE_URL` | Recomendada | URL pública usada nos links dos convites |
 | `LAUNCH_AT` | Para contador e automação | Data/hora do lançamento em ISO 8601 UTC |
 | `LAUNCH_ADMIN_TOKEN` | Para convites | Protege a rota de disparo dos e-mails |
-| `SMTP_HOST` | Para convites | Host do provedor de e-mail |
-| `SMTP_PORT` | Para convites | Normalmente `587` |
-| `SMTP_SECURE` | Para convites | `true` para SMTP TLS direto; `false` para STARTTLS |
-| `SMTP_USER` | Para convites | Usuário do SMTP |
-| `SMTP_PASS` | Para convites | Senha ou app password do SMTP |
-| `SMTP_FROM` | Não | Remetente; se vazio, usa `SMTP_USER` |
+| `GMAIL_CLIENT_ID` | Para convites | Client ID OAuth2 do Google Cloud |
+| `GMAIL_CLIENT_SECRET` | Para convites | Client secret OAuth2 |
+| `GMAIL_REFRESH_TOKEN` | Para convites | Refresh token com escopo `gmail.send` |
+| `GMAIL_USER` | Para convites | Conta Gmail que envia as mensagens |
 
 Nunca coloque senhas, tokens SMTP ou `LAUNCH_ADMIN_TOKEN` no GitHub ou no
 `.env.example`.
 
-### Gmail no Render
+### Gmail API no Render
 
-Use uma senha de aplicativo do Gmail e a porta SMTP com TLS direto:
+O envio usa a Gmail API por HTTPS, portanto não depende de conexão SMTP. A
+conta Gmail que enviará os convites precisa de um projeto no Google Cloud com
+a **Gmail API habilitada** e um cliente OAuth2 configurado para acesso
+offline. O refresh token precisa ter o escopo:
 
 ```text
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_SECURE=true
-SMTP_USER=seuemail@gmail.com
-SMTP_PASS=sua-senha-de-aplicativo
-SMTP_FROM=seuemail@gmail.com
+https://www.googleapis.com/auth/gmail.send
 ```
 
-O servidor tenta primeiro a porta configurada e, se a conexão falhar, tenta
-automaticamente a porta `587` com STARTTLS. O erro retornado informa se houve
-timeout de rede ou falha de autenticação.
+Configure no Render:
+
+```text
+GMAIL_CLIENT_ID=...
+GMAIL_CLIENT_SECRET=...
+GMAIL_REFRESH_TOKEN=...
+GMAIL_USER=seuemail@gmail.com
+```
+
+Para obter as credenciais:
+
+1. Abra o Google Cloud Console e crie ou selecione um projeto.
+2. Em **APIs e serviços → Biblioteca**, habilite **Gmail API**.
+3. Em **Tela de consentimento OAuth**, configure o aplicativo.
+4. Em **Credenciais**, crie um **ID do cliente OAuth** do tipo aplicativo para computador.
+5. Use o OAuth 2.0 Playground do Google com seu `Client ID` e `Client secret`.
+6. Adicione o escopo `https://www.googleapis.com/auth/gmail.send`.
+7. Autorize com a conta que enviará os e-mails e troque o authorization code por um refresh token.
+8. Coloque o refresh token somente nas variáveis do Render.
+
+Não use senha de aplicativo nesse fluxo. O `GMAIL_REFRESH_TOKEN` substitui a
+senha SMTP e não deve ser commitado no repositório.
 
 ## Deploy no Render
 
@@ -148,26 +163,24 @@ Adicione:
 SITE_URL=https://pokeverse-30es.onrender.com
 LAUNCH_AT=2026-12-01T18:00:00.000Z
 LAUNCH_ADMIN_TOKEN=<um-token-aleatorio-e-secreto>
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_SECURE=true
-SMTP_USER=seuemail@gmail.com
-SMTP_PASS=sua-senha-de-aplicativo
-SMTP_FROM=seuemail@gmail.com
+GMAIL_CLIENT_ID=...
+GMAIL_CLIENT_SECRET=...
+GMAIL_REFRESH_TOKEN=...
+GMAIL_USER=seuemail@gmail.com
 ```
 
 Use **Generate** para criar `LAUNCH_ADMIN_TOKEN`, se essa opção aparecer.
 O valor de `SITE_URL` deve ser exatamente a URL pública atual do serviço,
 incluindo `https://`, sem barra no final.
 
-As variáveis de SMTP não são necessárias para receber pré-cadastros. Elas só
-precisam estar preenchidas antes de executar o disparo dos convites.
+As credenciais da Gmail API não são necessárias para receber pré-cadastros.
+Elas precisam estar preenchidas antes de executar o disparo dos convites.
 
 `LAUNCH_AT` é a data/hora oficial do lançamento em UTC. A landing page exibe
 o contador regressivo calculado no navegador. Quando o horário chega, o
 servidor verifica automaticamente os pré-cadastros pendentes e envia os
-convites usando SMTP. Se o SMTP estiver indisponível, o servidor tenta
-novamente a cada minuto enquanto permanecer ativo.
+convites usando a Gmail API. Se o serviço do Google estiver indisponível, o
+servidor tenta novamente a cada minuto enquanto permanecer ativo.
 
 ### 3. Salvar e redeployar
 
@@ -189,11 +202,11 @@ O retorno esperado é:
 Também faça um pré-cadastro de teste pela página pública e confirme que ele
 aparece no contador. Não execute o disparo de lançamento durante o teste.
 
-### 4. Configurar o SMTP
+### 4. Configurar a Gmail API
 
-Escolha um provedor SMTP e crie uma credencial própria para a aplicação.
-Quando o provedor exigir autenticação em dois fatores, use uma **app password**
-em `SMTP_PASS`, não a senha pessoal principal.
+O envio usa OAuth2 e HTTPS. Não use senha de aplicativo neste fluxo. O
+`GMAIL_REFRESH_TOKEN` é o credencial de longa duração que autoriza o servidor
+a enviar pela conta definida em `GMAIL_USER`.
 
 Depois de salvar as variáveis e confirmar que o serviço está saudável, envie
 um convite de teste somente se houver um pré-cadastro de teste:

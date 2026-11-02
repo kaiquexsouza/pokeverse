@@ -1,7 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const db = require('../db');
 const { gerarToken, exigirLogin } = require('../auth');
 
@@ -145,44 +144,29 @@ router.post('/pre-cadastro/finalizar', async (req, res) => {
 
 async function notificarLancamento() {
   if (!DATA_LANCAMENTO || DATA_LANCAMENTO > new Date()) return { enviados: 0 };
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    throw new Error('Configure SMTP_USER e SMTP_PASS com o Gmail e a senha de aplicativo.');
+  if (!process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET
+    || !process.env.GMAIL_REFRESH_TOKEN || !process.env.GMAIL_USER) {
+    throw new Error('Configure GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN e GMAIL_USER.');
   }
 
   if (envioEmAndamento) return envioEmAndamento;
 
   envioEmAndamento = (async () => {
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const configuracoes = [
-      {
-        port: Number(process.env.SMTP_PORT || 465),
-        secure: process.env.SMTP_SECURE !== 'false',
-      },
-      { port: 587, secure: false },
-    ];
-    let transporter;
-    let ultimoErro;
-    for (const configuracao of configuracoes) {
-      transporter = nodemailer.createTransport({
-        host,
-        ...configuracao,
-        connectionTimeout: 15000,
-        greetingTimeout: 15000,
-        socketTimeout: 15000,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-      });
-      try {
-        await transporter.verify();
-        break;
-      } catch (err) {
-        ultimoErro = err;
-        transporter.close();
-        transporter = null;
-      }
+    const tokenResposta = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GMAIL_CLIENT_ID,
+        client_secret: process.env.GMAIL_CLIENT_SECRET,
+        refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+        grant_type: 'refresh_token',
+      }),
+    });
+    const tokenDados = await tokenResposta.json().catch(() => ({}));
+    if (!tokenResposta.ok || !tokenDados.access_token) {
+      throw new Error(`OAuth do Gmail HTTP ${tokenResposta.status}: ${tokenDados.error_description || tokenDados.error || 'resposta inválida'}`);
     }
-    if (!transporter) {
-      throw new Error(`Não foi possível conectar ao Gmail por SMTP: ${ultimoErro.message}`);
-    }
+    const accessToken = tokenDados.access_token;
     const { rows } = await db.query(
       'SELECT id, nome_completo, email FROM pre_cadastros WHERE convidado_em IS NULL ORDER BY id'
     );
@@ -194,13 +178,47 @@ async function notificarLancamento() {
       const texto = `Olá, ${interessado.nome_completo}! Finalize seu cadastro no Pokeverse: ${link}`;
       const html = `<p>Olá, ${nome}!</p><p>O Pokeverse foi lançado. Finalize seu cadastro pelo link abaixo:</p><p><a href="${link}">Criar minha conta</a></p>`;
 
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to: interessado.email,
-        subject: assunto,
-        text: texto,
+      const mensagem = [
+        `From: Pokeverse <${process.env.GMAIL_USER}>`,
+        `To: ${interessado.email}`,
+        `Subject: ${assunto}`,
+        'MIME-Version: 1.0',
+        'Content-Type: multipart/alternative; boundary="pokeverse-boundary"',
+        '',
+        '--pokeverse-boundary',
+        'Content-Type: text/plain; charset="UTF-8"',
+        'Content-Transfer-Encoding: 8bit',
+        '',
+        texto,
+        '',
+        '--pokeverse-boundary',
+        'Content-Type: text/html; charset="UTF-8"',
+        'Content-Transfer-Encoding: 8bit',
+        '',
         html,
-      });
+        '',
+        '--pokeverse-boundary--',
+      ].join('\r\n');
+      const mensagemCodificada = Buffer.from(mensagem, 'utf8')
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+      const envioResposta = await fetch(
+        'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ raw: mensagemCodificada }),
+        }
+      );
+      const envioDados = await envioResposta.json().catch(() => ({}));
+      if (!envioResposta.ok) {
+        throw new Error(`Gmail API HTTP ${envioResposta.status}: ${envioDados.error?.message || 'resposta inválida'}`);
+      }
       await db.query(
         'UPDATE pre_cadastros SET token_convite = $1, convidado_em = NOW() WHERE id = $2',
         [token, interessado.id]

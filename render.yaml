@@ -23,18 +23,14 @@ services:
         sync: false
       - key: LAUNCH_ADMIN_TOKEN
         generateValue: true
-      # Preencha estas variáveis no painel do Render usando o seu provedor SMTP.
-      - key: SMTP_HOST
+      # Credenciais OAuth2 da Gmail API, preenchidas no painel do Render.
+      - key: GMAIL_CLIENT_ID
         sync: false
-      - key: SMTP_PORT
-        value: "465"
-      - key: SMTP_SECURE
-        value: "true"
-      - key: SMTP_USER
+      - key: GMAIL_CLIENT_SECRET
         sync: false
-      - key: SMTP_PASS
+      - key: GMAIL_REFRESH_TOKEN
         sync: false
-      - key: SMTP_FROM
+      - key: GMAIL_USER
         sync: false
 
 databases:
