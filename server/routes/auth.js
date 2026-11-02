@@ -18,6 +18,81 @@ function escaparHtml(valor) {
   }[caractere]));
 }
 
+function codificarCabecalho(valor) {
+  return `=?UTF-8?B?${Buffer.from(valor, 'utf8').toString('base64')}?=`;
+}
+
+function codificarCorpo(valor) {
+  return Buffer.from(valor, 'utf8').toString('base64').replace(/(.{76})/g, '$1\r\n');
+}
+
+function criarEmailConvite({ nomeTexto, nomeHtml, link }) {
+  const assunto = 'O Pokeverse foi lançado! Finalize seu cadastro';
+  const texto = [
+    `Olá, ${nomeTexto}!`,
+    '',
+    'O Pokeverse foi lançado e sua jornada está pronta para começar.',
+    'Finalize seu cadastro pelo link abaixo:',
+    link,
+    '',
+    'Se você não solicitou este convite, pode ignorar esta mensagem.',
+  ].join('\n');
+  const html = `<!doctype html>
+<html lang="pt-BR">
+  <body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#172033;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Sua jornada no Pokeverse começa agora.</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f1f5f9;">
+      <tr><td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:620px;background:#ffffff;border-radius:20px;overflow:hidden;">
+          <tr>
+            <td style="padding:28px 32px;background:#182235;text-align:center;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                  <td style="width:48px;height:48px;border-radius:50%;background:#ef4444;border:4px solid #ffffff;box-shadow:0 0 0 4px #fbbf24;font-size:0;line-height:0;">&nbsp;</td>
+                  <td style="padding-left:14px;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-.5px;">Pokeverse</td>
+                </tr>
+              </table>
+              <p style="margin:18px 0 0;color:#cbd5e1;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;">Sua aventura começa agora</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="height:7px;background:#ef4444;border-bottom:7px solid #fbbf24;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td style="padding:40px 42px 32px;">
+              <p style="margin:0 0 12px;color:#64748b;font-size:14px;">Olá, ${nomeHtml}!</p>
+              <h1 style="margin:0 0 18px;color:#182235;font-size:30px;line-height:1.2;">O Pokeverse foi lançado!</h1>
+              <p style="margin:0;color:#475569;font-size:16px;line-height:1.7;">
+                Sua jornada está pronta para começar. Crie sua conta e venha fazer parte da comunidade de treinadores.
+              </p>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:30px 0 28px;">
+                <tr>
+                  <td style="border-radius:10px;background:#2563eb;">
+                    <a href="${link}" style="display:inline-block;padding:15px 25px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;">Criar minha conta</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.6;">
+                Se o botão não funcionar, copie este endereço para o navegador:<br>
+                <a href="${link}" style="color:#2563eb;word-break:break-all;">${link}</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 42px;background:#f8fafc;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.6;">
+              Você recebeu este e-mail porque se cadastrou para acompanhar o lançamento do Pokeverse.<br>
+              Se você não solicitou este convite, pode ignorar esta mensagem.
+            </td>
+          </tr>
+        </table>
+        <p style="margin:18px 0 0;color:#94a3b8;font-size:11px;">Pokeverse · Uma comunidade feita para quem ama explorar</p>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+  return { assunto, texto, html };
+}
+
 function respostaComToken(usuario) {
   return {
     token: gerarToken(usuario),
@@ -174,28 +249,31 @@ async function notificarLancamento() {
       const token = crypto.randomBytes(32).toString('hex');
       const link = `${URL_SITE}/cadastro.html?token=${token}`;
       const nome = escaparHtml(interessado.nome_completo);
-      const assunto = 'O Pokeverse foi lançado! Finalize seu cadastro';
-      const texto = `Olá, ${interessado.nome_completo}! Finalize seu cadastro no Pokeverse: ${link}`;
-      const html = `<p>Olá, ${nome}!</p><p>O Pokeverse foi lançado. Finalize seu cadastro pelo link abaixo:</p><p><a href="${link}">Criar minha conta</a></p>`;
+      const { assunto, texto, html } = criarEmailConvite({
+        nomeTexto: interessado.nome_completo,
+        nomeHtml: nome,
+        link: escaparHtml(link),
+      });
 
       const mensagem = [
-        `From: Pokeverse <${process.env.GMAIL_USER}>`,
+        `From: ${codificarCabecalho('Pokeverse')} <${process.env.GMAIL_USER}>`,
         `To: ${interessado.email}`,
-        `Subject: ${assunto}`,
+        `Subject: ${codificarCabecalho(assunto)}`,
         'MIME-Version: 1.0',
         'Content-Type: multipart/alternative; boundary="pokeverse-boundary"',
+        'X-Auto-Response-Suppress: All',
         '',
         '--pokeverse-boundary',
-        'Content-Type: text/plain; charset="UTF-8"',
-        'Content-Transfer-Encoding: 8bit',
+        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Transfer-Encoding: base64',
         '',
-        texto,
+        codificarCorpo(texto),
         '',
         '--pokeverse-boundary',
-        'Content-Type: text/html; charset="UTF-8"',
-        'Content-Transfer-Encoding: 8bit',
+        'Content-Type: text/html; charset=UTF-8',
+        'Content-Transfer-Encoding: base64',
         '',
-        html,
+        codificarCorpo(html),
         '',
         '--pokeverse-boundary--',
       ].join('\r\n');
