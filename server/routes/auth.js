@@ -11,7 +11,7 @@ const NOME_USUARIO_VALIDO = /^[a-zA-Z0-9_.]{3,20}$/;
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const URL_SITE = process.env.SITE_URL || 'http://localhost:3000';
 const DATA_LANCAMENTO = process.env.LAUNCH_AT ? new Date(process.env.LAUNCH_AT) : null;
-let envioEmAndamento = false;
+let envioEmAndamento = null;
 
 function escaparHtml(valor) {
   return valor.replace(/[&<>"']/g, (caractere) => ({
@@ -144,21 +144,45 @@ router.post('/pre-cadastro/finalizar', async (req, res) => {
 });
 
 async function notificarLancamento() {
-  if (envioEmAndamento) return { enviados: 0 };
   if (!DATA_LANCAMENTO || DATA_LANCAMENTO > new Date()) return { enviados: 0 };
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    throw new Error('Configure SMTP_HOST, SMTP_USER e SMTP_PASS antes de enviar os convites.');
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error('Configure SMTP_USER e SMTP_PASS com o Gmail e a senha de aplicativo.');
   }
 
-  envioEmAndamento = true;
-  try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-    await transporter.verify();
+  if (envioEmAndamento) return envioEmAndamento;
+
+  envioEmAndamento = (async () => {
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const configuracoes = [
+      {
+        port: Number(process.env.SMTP_PORT || 465),
+        secure: process.env.SMTP_SECURE !== 'false',
+      },
+      { port: 587, secure: false },
+    ];
+    let transporter;
+    let ultimoErro;
+    for (const configuracao of configuracoes) {
+      transporter = nodemailer.createTransport({
+        host,
+        ...configuracao,
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 15000,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      });
+      try {
+        await transporter.verify();
+        break;
+      } catch (err) {
+        ultimoErro = err;
+        transporter.close();
+        transporter = null;
+      }
+    }
+    if (!transporter) {
+      throw new Error(`Não foi possível conectar ao Gmail por SMTP: ${ultimoErro.message}`);
+    }
     const { rows } = await db.query(
       'SELECT id, nome_completo, email FROM pre_cadastros WHERE convidado_em IS NULL ORDER BY id'
     );
@@ -166,12 +190,16 @@ async function notificarLancamento() {
       const token = crypto.randomBytes(32).toString('hex');
       const link = `${URL_SITE}/cadastro.html?token=${token}`;
       const nome = escaparHtml(interessado.nome_completo);
+      const assunto = 'O Pokeverse foi lançado! Finalize seu cadastro';
+      const texto = `Olá, ${interessado.nome_completo}! Finalize seu cadastro no Pokeverse: ${link}`;
+      const html = `<p>Olá, ${nome}!</p><p>O Pokeverse foi lançado. Finalize seu cadastro pelo link abaixo:</p><p><a href="${link}">Criar minha conta</a></p>`;
+
       await transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: interessado.email,
-        subject: 'O Pokeverse foi lançado! Finalize seu cadastro',
-        text: `Olá, ${interessado.nome_completo}! Finalize seu cadastro no Pokeverse: ${link}`,
-        html: `<p>Olá, ${nome}!</p><p>O Pokeverse foi lançado. Finalize seu cadastro pelo link abaixo:</p><p><a href="${link}">Criar minha conta</a></p>`,
+        subject: assunto,
+        text: texto,
+        html,
       });
       await db.query(
         'UPDATE pre_cadastros SET token_convite = $1, convidado_em = NOW() WHERE id = $2',
@@ -179,8 +207,12 @@ async function notificarLancamento() {
       );
     }
     return { enviados: rows.length };
+  })();
+
+  try {
+    return await envioEmAndamento;
   } finally {
-    envioEmAndamento = false;
+    envioEmAndamento = null;
   }
 }
 
@@ -188,11 +220,12 @@ router.post('/notificar-lancamento', async (req, res) => {
   if (!process.env.LAUNCH_ADMIN_TOKEN || req.get('x-launch-token') !== process.env.LAUNCH_ADMIN_TOKEN) {
     return res.status(401).json({ erro: 'Não autorizado.' });
   }
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    return res.status(503).json({ erro: 'Configure SMTP_HOST, SMTP_USER e SMTP_PASS antes de enviar os convites.' });
-  }
   try {
-    res.json(await notificarLancamento());
+    const resultado = await notificarLancamento();
+    const { rows } = await db.query(
+      'SELECT COUNT(*)::int AS pendentes FROM pre_cadastros WHERE convidado_em IS NULL'
+    );
+    res.json({ ...resultado, pendentes: rows[0].pendentes });
   } catch (err) {
     console.error('Falha no disparo manual dos convites:', err);
     res.status(502).json({ erro: `Não foi possível enviar os convites: ${err.message}` });

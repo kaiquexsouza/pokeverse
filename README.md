@@ -97,6 +97,23 @@ usar apenas um Live Server não fornece a API nem o PostgreSQL.
 Nunca coloque senhas, tokens SMTP ou `LAUNCH_ADMIN_TOKEN` no GitHub ou no
 `.env.example`.
 
+### Gmail no Render
+
+Use uma senha de aplicativo do Gmail e a porta SMTP com TLS direto:
+
+```text
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=seuemail@gmail.com
+SMTP_PASS=sua-senha-de-aplicativo
+SMTP_FROM=seuemail@gmail.com
+```
+
+O servidor tenta primeiro a porta configurada e, se a conexão falhar, tenta
+automaticamente a porta `587` com STARTTLS. O erro retornado informa se houve
+timeout de rede ou falha de autenticação.
+
 ## Deploy no Render
 
 O projeto já está publicado como Web Service. Não é necessário criar outro
@@ -131,12 +148,12 @@ Adicione:
 SITE_URL=https://pokeverse-30es.onrender.com
 LAUNCH_AT=2026-12-01T18:00:00.000Z
 LAUNCH_ADMIN_TOKEN=<um-token-aleatorio-e-secreto>
-SMTP_HOST=<host-do-seu-provedor>
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=<usuario-do-email>
-SMTP_PASS=<senha-ou-app-password>
-SMTP_FROM=<email-remetente>
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=seuemail@gmail.com
+SMTP_PASS=sua-senha-de-aplicativo
+SMTP_FROM=seuemail@gmail.com
 ```
 
 Use **Generate** para criar `LAUNCH_ADMIN_TOKEN`, se essa opção aparecer.
@@ -189,6 +206,11 @@ curl -X POST https://pokeverse-30es.onrender.com/api/auth/notificar-lancamento \
 A rota manual só envia depois que `LAUNCH_AT` chega e envia apenas registros ainda não convidados. Cada registro é marcado
 como enviado somente depois que o SMTP confirma o envio. Se o SMTP falhar,
 ele poderá ser tentado novamente.
+
+A resposta manual inclui `enviados` e `pendentes`. Se já houver uma tentativa
+automática em andamento, a chamada manual aguarda essa mesma tentativa em vez
+de retornar falsamente `enviados: 0`. Erros de autenticação ou conexão SMTP
+retornam HTTP 502 e também aparecem nos Logs do Render.
 
 > Essa rota deve ser executada apenas no lançamento. O token administrativo
 > nunca deve ser colocado no front-end.
