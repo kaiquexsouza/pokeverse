@@ -249,7 +249,7 @@ variáveis manualmente pelo painel, conforme a seção anterior. Não altere
 | `POST` | `/api/auth/cadastro` | Não | Cadastro legado direto |
 | `POST` | `/api/auth/login` | Não | Login por usuário/e-mail e senha |
 | `GET` | `/api/auth/eu` | Bearer JWT | Dados da sessão atual |
-| `GET` | `/api/estatisticas` | Não | Contador de interessados e posts |
+| `GET` | `/api/estatisticas` | Não | Contador de interessados antes do lançamento ou usuários cadastrados depois dele, além de posts |
 | `GET` | `/api/posts?categoria=` | Opcional | Lista posts |
 | `POST` | `/api/posts` | Bearer JWT | Cria um post |
 | `DELETE` | `/api/posts/:id` | Bearer JWT | Remove o próprio post |

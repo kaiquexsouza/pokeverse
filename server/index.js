@@ -20,11 +20,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 
 app.get('/api/estatisticas', async (req, res) => {
+  const lancamento = process.env.LAUNCH_AT ? new Date(process.env.LAUNCH_AT) : null;
+  const launched = Boolean(lancamento && !Number.isNaN(lancamento.getTime()) && lancamento <= new Date());
   const { rows } = await db.query(
-    `SELECT (SELECT COUNT(*) FROM pre_cadastros)::int AS membros,
-            (SELECT COUNT(*) FROM posts)::int    AS posts`
+    `SELECT (
+              SELECT COUNT(*)
+              FROM ${launched ? 'usuarios' : 'pre_cadastros'}
+            )::int AS membros,
+            (SELECT COUNT(*) FROM posts)::int AS posts`
   );
-  res.json(rows[0]);
+  res.json({ ...rows[0], launched });
 });
 
 app.get('/api/lancamento', (req, res) => {

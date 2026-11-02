@@ -28,14 +28,23 @@ function animarContador(elemento, valorFinal) {
 
 async function carregarEstatisticas() {
   try {
-    const { membros, posts } = await App.api('/estatisticas');
+    const { membros, posts, launched } = await App.api('/estatisticas');
     animarContador(document.getElementById('stat-membros'), membros);
     animarContador(document.getElementById('stat-posts'), posts);
 
+    const labelMembros = document.getElementById('stat-membros-label');
     const cta = document.getElementById('cta-membros');
-    if (membros === 0) cta.textContent = 'Seja uma das primeiras pessoas a receber o convite.';
-    else if (membros === 1) cta.textContent = '1 pessoa já está na lista de espera.';
-    else cta.textContent = `${App.formatarNumero(membros)} pessoas já estão na lista de espera.`;
+    if (launched) {
+      labelMembros.textContent = 'Usuários cadastrados';
+      if (membros === 0) cta.textContent = 'Seja uma das primeiras pessoas a fazer parte da comunidade.';
+      else if (membros === 1) cta.textContent = '1 usuário já faz parte da comunidade.';
+      else cta.textContent = `${App.formatarNumero(membros)} usuários já fazem parte da comunidade.`;
+    } else {
+      labelMembros.textContent = 'Interessados';
+      if (membros === 0) cta.textContent = 'Seja uma das primeiras pessoas a receber o convite.';
+      else if (membros === 1) cta.textContent = '1 pessoa já está na lista de espera.';
+      else cta.textContent = `${App.formatarNumero(membros)} pessoas já estão na lista de espera.`;
+    }
   } catch {
     // Sem servidor: mantém os textos padrão
   }
