@@ -5,8 +5,6 @@ const success = document.getElementById('join-success');
 const successTitle = document.getElementById('success-title');
 const joinError = document.getElementById('join-error');
 const joinSubmit = document.getElementById('join-submit');
-const launchCountdown = document.getElementById('launch-countdown');
-const launchPill = document.querySelector('.pill-red span:last-child');
 
 // ===== Contadores (vêm do banco) =====
 // Anima o número do valor atual até o novo
@@ -38,34 +36,63 @@ async function carregarEstatisticas() {
   } catch {
     // Sem servidor: mantém os textos padrão
   }
+}
 
-  async function carregarLancamento() {
-    try {
-      const { launchAt, launched } = await App.api('/lancamento');
-      if (!launchAt) {
-        launchCountdown.textContent = 'Data em breve';
-        return;
-      }
-
-      const data = new Date(launchAt);
-      const atualizar = () => {
-        const restante = data.getTime() - Date.now();
-        if (restante <= 0 || launched) {
-          launchCountdown.textContent = 'Já estamos no ar!';
-          launchPill.textContent = 'Comunidade lançada';
-          return;
-        }
-        const dias = Math.floor(restante / 86400000);
-        const horas = Math.floor((restante % 86400000) / 3600000);
-        const minutos = Math.floor((restante % 3600000) / 60000);
-        const segundos = Math.floor((restante % 60000) / 1000);
-        launchCountdown.textContent = `${dias}d ${horas}h ${minutos}min ${segundos}s`;
-      };
-      atualizar();
-      setInterval(atualizar, 1000);
-    } catch {
-      launchCountdown.textContent = 'Data em breve';
+async function carregarLancamento() {
+  try {
+    const { launchAt, launched } = await App.api('/lancamento');
+    if (!launchAt) {
+      return;
     }
+
+    const data = new Date(launchAt);
+    const campos = {
+      dias: document.getElementById('cd-dias'),
+      horas: document.getElementById('cd-horas'),
+      minutos: document.getElementById('cd-minutos'),
+      segundos: document.getElementById('cd-segundos'),
+    };
+    const dataFormatada = new Intl.DateTimeFormat('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'America/Sao_Paulo',
+    }).format(data);
+    document.getElementById('launch-date').textContent =
+      `${dataFormatada[0].toUpperCase()}${dataFormatada.slice(1)} · ${data.toLocaleTimeString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        hour: '2-digit',
+        minute: '2-digit',
+      })}h (horário de Brasília)`;
+
+    function doisDigitos(numero) {
+      return String(numero).padStart(2, '0');
+    }
+
+    let intervalo;
+    const atualizar = () => {
+      const restante = data.getTime() - Date.now();
+      const totalSegundos = Math.max(0, Math.floor(restante / 1000));
+      campos.dias.textContent = doisDigitos(Math.floor(totalSegundos / 86400));
+      campos.horas.textContent = doisDigitos(Math.floor((totalSegundos % 86400) / 3600));
+      campos.minutos.textContent = doisDigitos(Math.floor((totalSegundos % 3600) / 60));
+      campos.segundos.textContent = doisDigitos(totalSegundos % 60);
+
+      if (restante <= 0 || launched) {
+        clearInterval(intervalo);
+        document.getElementById('launch-title').replaceChildren(
+          'O Pokeverse ',
+          App.el('span', { class: 'text-yellow', text: 'chegou!' })
+        );
+        document.getElementById('launch-desc').textContent =
+          'O lançamento oficial já aconteceu. Entre, crie seu post e encontre outros treinadores.';
+      }
+    };
+    atualizar();
+    intervalo = setInterval(atualizar, 1000);
+  } catch {
+    document.getElementById('launch-date').textContent = 'Data de lançamento em breve';
   }
 }
 
@@ -118,3 +145,4 @@ document.addEventListener('sessao', () => {
 
 atualizarTela();
 carregarEstatisticas();
+carregarLancamento();
