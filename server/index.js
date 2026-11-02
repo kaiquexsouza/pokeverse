@@ -3,7 +3,11 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const db = require('./db');
-const { router: authRoutes, iniciarAgendamentoLancamento } = require('./routes/auth');
+const {
+  router: authRoutes,
+  iniciarAgendamentoLancamento,
+  notificarLancamento,
+} = require('./routes/auth');
 const postRoutes = require('./routes/posts');
 
 const app = express();
@@ -25,9 +29,17 @@ app.get('/api/estatisticas', async (req, res) => {
 
 app.get('/api/lancamento', (req, res) => {
   const lancamento = process.env.LAUNCH_AT ? new Date(process.env.LAUNCH_AT) : null;
+  const launched = Boolean(lancamento && lancamento <= new Date());
+  if (launched) {
+    notificarLancamento()
+      .then(({ enviados }) => {
+        if (enviados) console.log(`Convites enviados após verificação de lançamento: ${enviados}.`);
+      })
+      .catch((err) => console.error('Falha ao enviar convites após o lançamento:', err.message));
+  }
   res.json({
     launchAt: lancamento && !Number.isNaN(lancamento.getTime()) ? lancamento.toISOString() : null,
-    launched: Boolean(lancamento && lancamento <= new Date()),
+    launched,
   });
 });
 

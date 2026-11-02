@@ -244,6 +244,30 @@
             <p class="form-terms">Ao fazer o pré-cadastro, você autoriza o envio do convite de lançamento para este e-mail.</p>
           </form>
 
+          <form id="registration-form" class="form" hidden>
+            <div>
+              <h3 class="form-title font-outfit">Criar sua conta</h3>
+              <p class="form-sub">O Pokeverse já está no ar. Faça seu cadastro para entrar.</p>
+            </div>
+            <div class="field">
+              <label for="cadastro-nome_usuario">Nome de usuário</label>
+              <input id="cadastro-nome_usuario" name="nome_usuario" type="text" placeholder="ash_ketchum"
+                minlength="3" maxlength="20" pattern="[a-zA-Z0-9_.]{3,20}" autocomplete="username" required />
+            </div>
+            <div class="field">
+              <label for="cadastro-email">E-mail</label>
+              <input id="cadastro-email" name="email" type="email" placeholder="ash@pallet.town" autocomplete="email" required />
+            </div>
+            <div class="field">
+              <label for="cadastro-senha">Senha</label>
+              <input id="cadastro-senha" name="senha" type="password" placeholder="Mínimo de 6 caracteres"
+                minlength="6" autocomplete="new-password" required />
+            </div>
+            <p class="form-error" id="registration-error" role="alert" hidden></p>
+            <button type="submit" class="btn-submit" id="registration-submit">Criar minha conta</button>
+            <p class="form-terms">Já tem uma conta? <button type="button" class="link" id="registration-login">Fazer login</button></p>
+          </form>
+
           <!-- Tela de sucesso -->
           <div id="join-success" class="success" hidden>
             <div class="success-icon">

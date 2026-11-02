@@ -158,6 +158,7 @@ async function notificarLancamento() {
       secure: process.env.SMTP_SECURE === 'true',
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
+    await transporter.verify();
     const { rows } = await db.query(
       'SELECT id, nome_completo, email FROM pre_cadastros WHERE convidado_em IS NULL ORDER BY id'
     );
@@ -190,7 +191,12 @@ router.post('/notificar-lancamento', async (req, res) => {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     return res.status(503).json({ erro: 'Configure SMTP_HOST, SMTP_USER e SMTP_PASS antes de enviar os convites.' });
   }
-  res.json(await notificarLancamento());
+  try {
+    res.json(await notificarLancamento());
+  } catch (err) {
+    console.error('Falha no disparo manual dos convites:', err);
+    res.status(502).json({ erro: `Não foi possível enviar os convites: ${err.message}` });
+  }
 });
 
 // POST /api/auth/login  { login, senha }  (login = nome de usuário ou e-mail)
@@ -270,4 +276,4 @@ function iniciarAgendamentoLancamento() {
   setInterval(verificar, 60_000);
 }
 
-module.exports = { router, iniciarAgendamentoLancamento };
+module.exports = { router, iniciarAgendamentoLancamento, notificarLancamento };

@@ -5,6 +5,9 @@ const success = document.getElementById('join-success');
 const successTitle = document.getElementById('success-title');
 const joinError = document.getElementById('join-error');
 const joinSubmit = document.getElementById('join-submit');
+const registrationForm = document.getElementById('registration-form');
+const registrationError = document.getElementById('registration-error');
+const registrationSubmit = document.getElementById('registration-submit');
 
 // ===== Contadores (vêm do banco) =====
 // Anima o número do valor atual até o novo
@@ -81,18 +84,51 @@ async function carregarLancamento() {
 
       if (restante <= 0 || launched) {
         clearInterval(intervalo);
-        document.getElementById('launch-title').replaceChildren(
-          'O Pokeverse ',
-          App.el('span', { class: 'text-yellow', text: 'chegou!' })
-        );
-        document.getElementById('launch-desc').textContent =
-          'O lançamento oficial já aconteceu. Entre, crie seu post e encontre outros treinadores.';
+        if (restante <= 0 && !launched) {
+          window.location.reload();
+          return;
+        }
+        ativarModoLancado();
       }
     };
     atualizar();
     intervalo = setInterval(atualizar, 1000);
   } catch {
     document.getElementById('launch-date').textContent = 'Data de lançamento em breve';
+  }
+
+  function ativarModoLancado() {
+    registrationForm.dataset.lancado = 'true';
+    document.querySelector('.pill-red span:last-child').textContent = 'Comunidade lançada';
+    document.querySelector('.hero-desc').textContent =
+      'O Pokeverse já está no ar. Crie sua conta e comece a conversar com outros treinadores.';
+    document.querySelector('.pill-blue span').textContent = 'Cadastro gratuito';
+    document.querySelector('.join-desc').textContent =
+      'Crie sua conta para participar das discussões, eventos e encontros da comunidade.';
+    document.querySelectorAll('.benefits li').forEach((item, index) => {
+      item.lastChild.textContent = [
+        'Acesso ao feed da comunidade',
+        'Participação em discussões e eventos',
+        'Conta gratuita no Pokeverse',
+      ][index];
+    });
+    document.querySelectorAll('[data-cta]').forEach((link) => {
+      link.textContent = 'Criar minha conta';
+      link.href = '#entrar';
+    });
+    const navButton = document.querySelector('#nav-auth .btn-login');
+    if (navButton) {
+      navButton.textContent = 'Criar conta';
+      navButton.href = '#entrar';
+    }
+    form.hidden = true;
+    registrationForm.hidden = Boolean(App.usuario);
+    document.getElementById('launch-title').replaceChildren(
+      'O Pokeverse ',
+      App.el('span', { class: 'text-yellow', text: 'chegou!' })
+    );
+    document.getElementById('launch-desc').textContent =
+      'O lançamento oficial já aconteceu. Entre, crie seu post e encontre outros treinadores.';
   }
 }
 
@@ -101,6 +137,9 @@ function atualizarTela() {
   const usuario = App.usuario;
 
   form.hidden = Boolean(usuario);
+  if (registrationForm.dataset.lancado === 'true') {
+    registrationForm.hidden = Boolean(usuario);
+  }
   success.hidden = !usuario;
   if (usuario) successTitle.textContent = `Você já está na comunidade, @${usuario.nome_usuario}!`;
 
@@ -126,6 +165,32 @@ form.addEventListener('submit', async (event) => {
         email: form.email.value.trim(),
       },
     });
+
+    registrationForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      App.mostrarErro(registrationError, '');
+      registrationSubmit.disabled = true;
+      registrationSubmit.textContent = 'Criando conta...';
+      try {
+        const dados = await App.api('/auth/cadastro', {
+          metodo: 'POST',
+          corpo: {
+            nome_usuario: registrationForm.nome_usuario.value.trim(),
+            email: registrationForm.email.value.trim(),
+            senha: registrationForm.senha.value,
+          },
+        });
+        App.salvarSessao(dados);
+        registrationForm.reset();
+      } catch (err) {
+        App.mostrarErro(registrationError, err.message);
+      } finally {
+        registrationSubmit.disabled = false;
+        registrationSubmit.textContent = 'Criar minha conta';
+      }
+    });
+
+    document.getElementById('registration-login').addEventListener('click', App.abrirLogin);
     form.reset();
     form.hidden = true;
     success.hidden = false;
