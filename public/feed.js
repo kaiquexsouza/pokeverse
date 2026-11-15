@@ -1,4 +1,8 @@
 // Feed: listar, criar e apagar posts; curtir; comentar.
+if (!App.usuario) {
+  window.location.replace('index.html#entrar');
+}
+
 const { el, icone, api, CATEGORIAS } = App;
 
 const ICONES = {
@@ -124,24 +128,6 @@ function trocarCategoria(categoria) {
 function renderizarComposer() {
   composer.replaceChildren();
   const usuario = App.usuario;
-
-  if (!usuario) {
-    composer.append(
-      el('div', { class: 'composer composer-convite' }, [
-        el('div', {}, [
-          el('h3', { class: 'composer-titulo font-outfit', text: 'Entre para participar' }),
-          el('p', { class: 'form-sub', text: 'Faça login para publicar, curtir e comentar.' }),
-        ]),
-        el('div', { class: 'composer-botoes' }, [
-          el('button', { type: 'button', class: 'btn btn-primary', text: 'Login', onclick: App.abrirLogin }),
-          el('a', { href: 'index.html#entrar', class: 'btn btn-outline', text: 'Criar conta' }),
-          // PROVISÓRIO: acesso sem login
-          el('button', { type: 'button', class: 'btn btn-outline', text: 'Entrar sem login', onclick: App.entrarSemLogin }),
-        ]),
-      ])
-    );
-    return;
-  }
 
   const texto = el('textarea', {
     name: 'conteudo',
@@ -453,10 +439,13 @@ async function carregarComentarios(postId, area, totalComentarios) {
 
 // Login/logout muda o que aparece (caixa de post, "curtido", botão apagar)
 document.addEventListener('sessao', () => {
+  if (!App.usuario) return;
   renderizarComposer();
   carregarPosts();
 });
 
-atualizarAbas();
-renderizarComposer();
-carregarPosts();
+if (App.usuario) {
+  atualizarAbas();
+  renderizarComposer();
+  carregarPosts();
+}
