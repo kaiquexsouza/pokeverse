@@ -3,7 +3,7 @@ if (!App.usuario) {
   window.location.replace('index.html#entrar');
 }
 
-const { el, icone, api, CATEGORIAS } = App;
+const { el, icone, api, avatar, CATEGORIAS } = App;
 
 const ICONES = {
   coracao:
@@ -16,15 +16,18 @@ const ICONES = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
 };
 
-// ===== Imagens =====
-const TAMANHO_MAXIMO_IMAGEM = 1080; // px no lado maior
+const TAMANHO_MAXIMO_IMAGEM = 1080;
 const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const TAMANHO_MAXIMO_ARQUIVO = 15 * 1024 * 1024;
 
-// Diminui a imagem e converte para JPEG (data URL), para caber no armazenamento
 function comprimirImagem(arquivo) {
   return new Promise((resolve, reject) => {
     if (!TIPOS_IMAGEM.includes(arquivo.type)) {
       reject(new Error('Escolha uma imagem JPG, PNG, WEBP ou GIF.'));
+      return;
+    }
+    if (arquivo.size > TAMANHO_MAXIMO_ARQUIVO) {
+      reject(new Error('Essa imagem é muito grande. Escolha uma de até 15 MB.'));
       return;
     }
 
@@ -38,7 +41,7 @@ function comprimirImagem(arquivo) {
       canvas.height = Math.round(imagem.height * escala);
 
       const contexto = canvas.getContext('2d');
-      contexto.fillStyle = '#fff'; // fundo branco para PNG transparente
+      contexto.fillStyle = '#fff';
       contexto.fillRect(0, 0, canvas.width, canvas.height);
       contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL('image/jpeg', 0.8));
@@ -51,7 +54,6 @@ function comprimirImagem(arquivo) {
   });
 }
 
-// Imagem em tela cheia
 let telaCheia = null;
 
 function abrirImagem(src) {
@@ -75,25 +77,42 @@ function fecharImagem() {
   document.body.classList.remove('sem-rolagem');
 }
 
-const CORES_AVATAR = ['#DC2626', '#2563EB', '#D97706', '#7C3AED', '#059669', '#DB2777'];
+const TEMAS = {
+  '': { selo: 'Comunidade', titulo: 'O que os treinadores estão ', destaque: 'dizendo.' },
+  jogos: { selo: 'Jogos Pokémon', titulo: 'Um treinador selvagem ', destaque: 'quer conversar!' },
+  animes: { selo: 'EP. 02 · Animes', titulo: 'A jornada ', destaque: 'continua!' },
+  cards: { selo: 'Trading Cards', titulo: 'Mostre suas ', destaque: 'melhores cartas!' },
+  gerais: { selo: 'Pokédex da comunidade', titulo: 'Registrando ', destaque: 'assuntos gerais…' },
+};
 
+const ARTES = {
+  jogos: () => [
+    el('div', { class: 'gb-cruz' }),
+    el('div', { class: 'gb-botoes' }, [el('span', { text: 'B' }), el('span', { text: 'A' })]),
+  ],
+  cards: () => [el('div', { class: 'carta-verso' }), el('div', { class: 'carta-verso' }), el('div', { class: 'carta-verso' })],
+  gerais: () => [el('div', { class: 'dex-lente' }), el('div', { class: 'dex-luzes' }, [el('span'), el('span'), el('span')])],
+};
+
+const feedPill = document.getElementById('feed-pill');
+const feedTitulo = document.getElementById('feed-titulo');
+const temaArte = document.getElementById('tema-arte');
 const tabs = document.getElementById('tabs');
 const composer = document.getElementById('composer');
 const listaPosts = document.getElementById('posts');
 const statusFeed = document.getElementById('feed-status');
+const INTERVALO_NOVIDADES = 20000;
+
+let maiorId = 0;
+let postsNovos = [];
+const idsNaTela = new Set();
+const postsNaLista = new Map();
+let listaPronta = false;
+const avisoNovos = el('button', { type: 'button', class: 'feed-novos', hidden: true, onclick: mostrarPostsNovos });
+listaPosts.before(avisoNovos);
 
 let categoriaAtual = new URLSearchParams(location.search).get('categoria');
 if (!CATEGORIAS[categoriaAtual]) categoriaAtual = '';
-
-function avatar(nome) {
-  let soma = 0;
-  for (const letra of nome) soma += letra.charCodeAt(0);
-  return el('span', {
-    class: 'avatar',
-    text: nome[0].toUpperCase(),
-    style: { backgroundColor: CORES_AVATAR[soma % CORES_AVATAR.length] },
-  });
-}
 
 function mostrarStatus(texto) {
   statusFeed.textContent = texto || '';
@@ -115,10 +134,24 @@ tabs.addEventListener('click', (evento) => {
   trocarCategoria(aba.dataset.categoria);
 });
 
+function aplicarTema() {
+  const tema = TEMAS[categoriaAtual];
+  document.body.dataset.tema = categoriaAtual || 'padrao';
+  feedPill.replaceChildren(el('span', { class: 'pulse-dot' }), el('span', { text: tema.selo }));
+  feedTitulo.replaceChildren(tema.titulo, el('span', { class: 'text-red', text: tema.destaque }));
+  temaArte.replaceChildren(...(ARTES[categoriaAtual] ? ARTES[categoriaAtual]() : []));
+  Laterais.trocarCategoria(categoriaAtual);
+}
+
+function atualizarLaterais() {
+  Laterais.definirPosts([...postsNaLista.values()]);
+}
+
 function trocarCategoria(categoria) {
   categoriaAtual = categoria;
   const url = categoria ? `?categoria=${categoria}` : location.pathname;
   history.replaceState(null, '', url);
+  aplicarTema();
   atualizarAbas();
   renderizarComposer();
   carregarPosts();
@@ -150,7 +183,6 @@ function renderizarComposer() {
     contador.textContent = `${texto.value.length}/1000`;
   });
 
-  // Imagem do post (opcional)
   let imagemEscolhida = null;
   const campoImagem = el('input', { type: 'file', accept: TIPOS_IMAGEM.join(','), hidden: true });
   const botaoImagem = el('button', { type: 'button', class: 'btn-imagem', onclick: () => campoImagem.click() }, [
@@ -218,6 +250,7 @@ function renderizarComposer() {
             trocarCategoria(post.categoria);
           } else {
             mostrarStatus('');
+            idsNaTela.add(post.id);
             listaPosts.prepend(cartaoPost(post));
           }
         } catch (err) {
@@ -242,21 +275,68 @@ function renderizarComposer() {
 // ===== Lista de posts =====
 let carregamentoAtual = 0;
 
+function registrarPosts(posts) {
+  for (const post of posts) {
+    maiorId = Math.max(maiorId, post.id);
+    idsNaTela.add(post.id);
+  }
+}
+
+function atualizarAvisoNovos() {
+  const total = postsNovos.length;
+  avisoNovos.hidden = total === 0;
+  avisoNovos.textContent = total === 1 ? '↑ 1 post novo' : `↑ ${total} posts novos`;
+}
+
+function mostrarPostsNovos() {
+  if (!postsNovos.length) return;
+  registrarPosts(postsNovos);
+  mostrarStatus('');
+  listaPosts.prepend(...postsNovos.map(cartaoPost));
+  postsNovos = [];
+  atualizarAvisoNovos();
+  listaPosts.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function buscarNovidades() {
+  if (document.hidden || !listaPronta) return;
+  const meuCarregamento = carregamentoAtual;
+  const parametros = new URLSearchParams();
+  if (categoriaAtual) parametros.set('categoria', categoriaAtual);
+  if (maiorId) parametros.set('depois', maiorId);
+
+  try {
+    const posts = await api(`/posts?${parametros}`);
+    if (meuCarregamento !== carregamentoAtual) return;
+    postsNovos = posts.filter((post) => !idsNaTela.has(post.id));
+    atualizarAvisoNovos();
+  } catch {}
+}
+
 async function carregarPosts() {
   const meuCarregamento = ++carregamentoAtual;
   listaPosts.replaceChildren();
+  maiorId = 0;
+  idsNaTela.clear();
+  postsNaLista.clear();
+  atualizarLaterais();
+  listaPronta = false;
+  postsNovos = [];
+  atualizarAvisoNovos();
   mostrarStatus('Carregando posts…');
 
   try {
     const query = categoriaAtual ? `?categoria=${categoriaAtual}` : '';
     const posts = await api(`/posts${query}`);
     if (meuCarregamento !== carregamentoAtual) return; // usuário trocou de aba no meio
+    listaPronta = true;
 
     if (posts.length === 0) {
       mostrarStatus('Nenhum post por aqui ainda. Que tal ser o primeiro?');
       return;
     }
     mostrarStatus('');
+    registrarPosts(posts);
     listaPosts.append(...posts.map(cartaoPost));
   } catch (err) {
     if (meuCarregamento === carregamentoAtual) mostrarStatus(err.message);
@@ -266,9 +346,12 @@ async function carregarPosts() {
 function cartaoPost(post) {
   const categoria = CATEGORIAS[post.categoria];
   const meu = App.usuario && App.usuario.id === post.autor_id;
+  postsNaLista.set(post.id, post);
+  atualizarLaterais();
 
   // Curtir
   const totalCurtidas = el('span', { text: post.curtidas });
+  const valorHp = el('span', { text: post.curtidas * 10 });
   const botaoCurtir = el('button', { type: 'button', class: 'acao acao-curtir', 'aria-pressed': post.curtido }, [
     icone(ICONES.coracao),
     totalCurtidas,
@@ -282,6 +365,10 @@ function cartaoPost(post) {
       botaoCurtir.classList.toggle('ativo', curtido);
       botaoCurtir.setAttribute('aria-pressed', curtido);
       totalCurtidas.textContent = curtidas;
+      valorHp.textContent = curtidas * 10;
+      post.curtidas = curtidas;
+      post.curtido = curtido;
+      atualizarLaterais();
     } catch (err) {
       alert(err.message);
     } finally {
@@ -303,7 +390,10 @@ function cartaoPost(post) {
     botaoComentar.setAttribute('aria-expanded', !areaComentarios.hidden);
     if (!areaComentarios.hidden && !comentariosCarregados) {
       comentariosCarregados = true;
-      await carregarComentarios(post.id, areaComentarios, totalComentarios);
+      await carregarComentarios(post.id, areaComentarios, totalComentarios, () => {
+        post.comentarios += 1;
+        atualizarLaterais();
+      });
     }
   });
 
@@ -314,10 +404,11 @@ function cartaoPost(post) {
       icone(ICONES.lixeira),
     ]);
 
-  const cartao = el('article', { class: 'post' }, [
+  const cartao = el('article', { class: 'post', id: `post-${post.id}` }, [
     el('header', { class: 'post-topo' }, [
       avatar(post.autor),
       el('div', { class: 'post-info' }, [
+        el('span', { class: 'post-numero', text: `Nº ${String(post.id).padStart(4, '0')}` }),
         el('span', { class: 'post-autor', text: `@${post.autor}` }),
         el('time', {
           class: 'post-tempo',
@@ -331,6 +422,7 @@ function cartaoPost(post) {
         text: categoria.nome,
         style: { color: categoria.cor, backgroundColor: categoria.fundo },
       }),
+      el('span', { class: 'post-hp', title: 'HP = curtidas × 10' }, [el('small', { text: 'HP' }), valorHp, el('span', { class: 'post-energia', text: '⚡' })]),
       botaoApagar,
     ]),
     post.conteudo && el('p', { class: 'post-texto', text: post.conteudo }),
@@ -349,6 +441,8 @@ function cartaoPost(post) {
       try {
         await api(`/posts/${post.id}`, { metodo: 'DELETE' });
         cartao.remove();
+        postsNaLista.delete(post.id);
+        atualizarLaterais();
         if (!listaPosts.children.length) mostrarStatus('Nenhum post por aqui ainda. Que tal ser o primeiro?');
       } catch (err) {
         alert(err.message);
@@ -374,7 +468,7 @@ function itemComentario(comentario) {
   ]);
 }
 
-async function carregarComentarios(postId, area, totalComentarios) {
+async function carregarComentarios(postId, area, totalComentarios, aoComentar) {
   const lista = el('ul', { class: 'comentario-lista' });
   const aviso = el('p', { class: 'comentario-aviso', text: 'Carregando comentários…' });
   area.replaceChildren(lista, aviso);
@@ -423,6 +517,7 @@ async function carregarComentarios(postId, area, totalComentarios) {
             lista.append(itemComentario(comentario));
             aviso.hidden = true;
             totalComentarios.textContent = Number(totalComentarios.textContent) + 1;
+            aoComentar();
             campo.value = '';
           } catch (err) {
             alert(err.message);
@@ -439,12 +534,15 @@ async function carregarComentarios(postId, area, totalComentarios) {
 
 // Login/logout muda o que aparece (caixa de post, "curtido", botão apagar)
 document.addEventListener('sessao', () => {
-  if (!App.usuario) return;
   renderizarComposer();
   carregarPosts();
 });
 
+document.addEventListener('visibilitychange', buscarNovidades);
+setInterval(buscarNovidades, INTERVALO_NOVIDADES);
+
 if (App.usuario) {
+  aplicarTema();
   atualizarAbas();
   renderizarComposer();
   carregarPosts();

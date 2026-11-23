@@ -1,266 +1,99 @@
-# Pokeverse
-
-Pokeverse é uma comunidade para fãs de Pokémon, com conteúdo sobre jogos,
-animes, cards e assuntos gerais. Atualmente o site está em fase de lançamento:
-visitantes fazem um pré-cadastro e recebem um convite por e-mail quando a
-plataforma for liberada.
+# pokeverse
+Pokeverse é um projeto de uma comunidade/fraternidade universitária web voltada para fãs de Pokémon que desejam se conectar, compartilhar paixões e aprender juntos. Participando de encontros marcados na página
 
 ## Funcionalidades
+- Cadastro (nome de usuário, e-mail e senha) e login com nome de usuário **ou** e-mail
+- Contador de membros e de posts vindo do banco
+- Feed com filtro por categoria (Jogos, Animes, Trading Cards, Assuntos Gerais), cada uma com visual próprio:
+  - **Jogos:** tela de Game Boy e posts como caixas de diálogo de RPG
+  - **Animes:** linhas de velocidade, retícula de mangá e posts como quadros de mangá
+  - **Trading Cards:** posts como cartas (moldura amarela, curtidas viram HP, brilho holográfico)
+  - **Assuntos Gerais:** visual de Pokédex, com cada post numerado como uma entrada (Nº 0012)
+- Laterais do feed (telas grandes) com destaques mais curtidos, treinadores mais ativos, próximos encontros
+  ligados à categoria e status da categoria, cada uma com o visual do tema (`public/feed-laterais.js`)
+- Criar posts com texto e/ou imagem, curtir/descurtir, comentar e apagar os próprios posts
+- Feed avisa quando chegam posts novos (confere a cada 20 s)
+- Contagem regressiva para o lançamento (5 de novembro)
+- **Encontros presenciais** (`encontros.html`): marcar batalhas, trocas de cartas, torneios, maratonas e bate-papos,
+  com data, local, cidade e vagas; confirmar presença ("Eu vou!"); filtros por tipo e cidade; aba "Que eu vou";
+  os 3 próximos aparecem na página inicial. O local exato só aparece para quem tem conta.
 
-- Landing page de lançamento com status da comunidade e contador de interessados.
-- Contador regressivo até a data/hora oficial de lançamento.
-- Pré-cadastro com nome completo e e-mail, sem criação de senha.
-- Envio automático dos convites quando o contador chega a zero.
-- Página de conclusão do cadastro acessada por link exclusivo.
-- Cadastro real com nome de usuário e senha.
-- Login com nome de usuário ou e-mail.
-- Feed com filtros por categoria: Jogos, Animes, Trading Cards e Assuntos Gerais.
-- Criação, curtida, remoção dos próprios posts e comentários.
+## Segurança
+- Senhas com bcrypt e sessão com JWT (`JWT_SECRET` gerado pelo Render)
+- Limite de tentativas: login, cadastro, posts, curtidas e comentários (`server/limites.js`)
+- Cabeçalhos de segurança com helmet (CSP, anti-clickjacking, nosniff)
+- Imagens: só JPG, PNG ou WEBP de até 1,5 MB, conferindo o conteúdo do arquivo
+- Consultas SQL parametrizadas e textos dos usuários exibidos sempre como texto (sem HTML)
 
 ## Tecnologias
-
-- **Front-end:** HTML, CSS e JavaScript puro em [`public/`](./public/).
-- **Back-end:** Node.js + Express em [`server/`](./server/).
-- **Banco:** PostgreSQL.
-- **Senhas:** bcrypt.
-- **Sessão:** JWT.
-- **E-mail:** Gmail API com OAuth2 via HTTPS.
-- **Deploy:** Render, configurado em [`render.yaml`](./render.yaml).
+- **Front-end:** HTML, CSS e JavaScript puro (`public/`)
+- **Back-end:** Node.js + Express (`server/`)
+- **Banco:** PostgreSQL (tabelas em `server/schema.sql`, criadas automaticamente ao iniciar)
+- **Senhas:** bcrypt · **Sessão:** JWT
 
 ## Estrutura
-
-```text
-public/index.html       landing page e pré-cadastro
-public/script.js        contador e envio do pré-cadastro
-public/cadastro.html    página de cadastro real por convite
-public/cadastro.js      validação do convite e criação da conta
-public/feed.html        feed da comunidade
-public/app.js           API, sessão, header e modal de login
-server/index.js         servidor Express e inicialização do banco
-server/routes/auth.js   cadastro, login, pré-cadastro e convites
-server/routes/posts.js  posts, curtidas e comentários
-server/schema.sql       tabelas criadas automaticamente
-render.yaml             Blueprint do Render
 ```
-
-## Banco de dados
-
-Ao iniciar, o servidor executa [`server/schema.sql`](./server/schema.sql).
-As tabelas principais são:
-
-- `usuarios`: contas reais, com senha armazenada como hash.
-- `pre_cadastros`: interessados que ainda não criaram uma conta.
-- `posts`, `curtidas` e `comentarios`: conteúdo da comunidade.
-
-O pré-cadastro não cria uma conta em `usuarios` e não armazena senha.
+public/            site (index.html, feed.html, encontros.html, style.css, app.js, script.js, feed.js, feed-laterais.js, encontros.js)
+server/index.js    servidor Express (serve o site e a API)
+server/db.js       conexão com o PostgreSQL
+server/auth.js     geração/validação do token de login
+server/limites.js  limites de tentativas por IP/usuário
+server/routes/     rotas da API (auth.js, posts.js, encontros.js)
+server/schema.sql  tabelas: usuarios, posts, curtidas, comentarios, encontros, encontro_participantes
+render.yaml        configuração de deploy no Render
+```
 
 ## Rodando localmente
-
-1. Instale o [Node.js 20+](https://nodejs.org) e o PostgreSQL.
-2. Crie um banco chamado `pokeverse`.
-3. Copie `.env.example` para `.env` e preencha `DATABASE_URL`.
-4. Na pasta do projeto, instale as dependências:
-
+1. Instale o [Node.js](https://nodejs.org) 20+ e o PostgreSQL (o instalador já inclui o pgAdmin).
+2. No **pgAdmin**: clique com o botão direito em *Databases → Create → Database…*, nome `pokeverse`.
+   Na aba *Definition*, deixe **Encoding = UTF8** (senão acentos dão erro).
+3. Copie `.env.example` para `.env` e coloque a senha do seu Postgres na `DATABASE_URL`.
+4. No terminal, na pasta do projeto:
    ```bash
    npm install
-   ```
-
-5. Inicie o servidor:
-
-   ```bash
    npm run dev
    ```
+5. Acesse http://localhost:3000. As tabelas são criadas sozinhas na primeira execução.
 
-6. Abra <http://localhost:3000>.
-
-O site deve ser acessado pelo servidor Express. Abrir o HTML diretamente ou
-usar apenas um Live Server não fornece a API nem o PostgreSQL.
-
-## Variáveis de ambiente
-
-| Variável | Obrigatória | Finalidade |
-|---|---:|---|
-| `DATABASE_URL` | Sim | URL de conexão com o PostgreSQL |
-| `JWT_SECRET` | Sim em produção | Assinatura dos tokens de sessão |
-| `NODE_ENV` | Recomendada | Use `production` no Render |
-| `PORT` | Não | Porta do servidor; o Render fornece automaticamente |
-| `SITE_URL` | Recomendada | URL pública usada nos links dos convites |
-| `LAUNCH_AT` | Para contador e automação | Data/hora do lançamento em ISO 8601 UTC |
-| `LAUNCH_ADMIN_TOKEN` | Para convites | Protege a rota de disparo dos e-mails |
-| `GMAIL_CLIENT_ID` | Para convites | Client ID OAuth2 do Google Cloud |
-| `GMAIL_CLIENT_SECRET` | Para convites | Client secret OAuth2 |
-| `GMAIL_REFRESH_TOKEN` | Para convites | Refresh token com escopo `gmail.send` |
-| `GMAIL_USER` | Para convites | Conta Gmail que envia as mensagens |
-
-Nunca coloque senhas, tokens SMTP ou `LAUNCH_ADMIN_TOKEN` no GitHub ou no
-`.env.example`.
-
-### Gmail API no Render
-
-O envio usa a Gmail API por HTTPS, portanto não depende de conexão SMTP. A
-conta Gmail que enviará os convites precisa de um projeto no Google Cloud com
-a **Gmail API habilitada** e um cliente OAuth2 configurado para acesso
-offline. O refresh token precisa ter o escopo:
-
-```text
-https://www.googleapis.com/auth/gmail.send
-```
-
-Configure no Render:
-
-```text
-GMAIL_CLIENT_ID=...
-GMAIL_CLIENT_SECRET=...
-GMAIL_REFRESH_TOKEN=...
-GMAIL_USER=seuemail@gmail.com
-```
-
-Para obter as credenciais:
-
-1. Abra o Google Cloud Console e crie ou selecione um projeto.
-2. Em **APIs e serviços → Biblioteca**, habilite **Gmail API**.
-3. Em **Tela de consentimento OAuth**, configure o aplicativo.
-4. Em **Credenciais**, crie um **ID do cliente OAuth** do tipo aplicativo para computador.
-5. Use o OAuth 2.0 Playground do Google com seu `Client ID` e `Client secret`.
-6. Adicione o escopo `https://www.googleapis.com/auth/gmail.send`.
-7. Autorize com a conta que enviará os e-mails e troque o authorization code por um refresh token.
-8. Coloque o refresh token somente nas variáveis do Render.
-
-Não use senha de aplicativo nesse fluxo. O `GMAIL_REFRESH_TOKEN` substitui a
-senha SMTP e não deve ser commitado no repositório.
+> O site precisa do servidor rodando. Abrir o `index.html` direto no navegador não carrega login nem posts.
 
 ## Deploy no Render
+1. Envie o código para o GitHub.
+2. No [Render](https://dashboard.render.com): **New → Blueprint** e selecione o repositório.
+   O `render.yaml` cria o site (`pokeverse`) e o banco (`pokeverse-db`), já conectados, e gera o `JWT_SECRET`.
+3. Clique em **Apply** e aguarde o deploy. A URL aparece no serviço `pokeverse` (ex.: `https://pokeverse.onrender.com`).
 
-O projeto já está publicado como Web Service. Não é necessário criar outro
-serviço nem apagar o banco existente.
+Observações do plano gratuito:
+- O site "dorme" após ~15 min sem acesso; o primeiro acesso depois disso demora uns 30–50 s.
+- O PostgreSQL gratuito do Render tem prazo de validade. Confira a data no painel do banco.
 
-### 1. Enviar o código atualizado
+## Acessando o banco do Render pelo pgAdmin
+1. No Render, abra o banco `pokeverse-db` → **Connect** → aba **External** e copie os dados.
+2. No pgAdmin: *Servers → Register → Server…*
+   - **General → Name:** `Pokeverse (Render)`
+   - **Connection → Host:** o host externo (ex.: `dpg-xxxxx-a.oregon-postgres.render.com`)
+   - **Port:** `5432` · **Maintenance database:** `pokeverse`
+   - **Username / Password:** os do Render
+   - **Parameters → SSL mode:** `require`
+3. As tabelas ficam em *pokeverse → Schemas → public → Tables*.
 
-Faça commit e push das alterações para a mesma branch conectada ao serviço
-(na imagem, `main`). O Render fará o deploy automático se o Auto-Deploy estiver
-habilitado. Caso contrário, use **Manual Deploy → Deploy latest commit**.
-
-O serviço usa:
-
-```text
-Build Command: npm install
-Start Command: npm start
-Health Check: /api/saude
-```
-
-### 2. Atualizar as variáveis no Web Service existente
-
-No Render, abra o Web Service **pokeverse-30es** → **Environment** → **Edit**
-e mantenha as três variáveis atuais:
-
-- `DATABASE_URL`
-- `JWT_SECRET`
-- `NODE_ENV=production`
-
-Adicione:
-
-```text
-SITE_URL=https://pokeverse-30es.onrender.com
-LAUNCH_AT=2026-12-01T18:00:00.000Z
-LAUNCH_ADMIN_TOKEN=<um-token-aleatorio-e-secreto>
-GMAIL_CLIENT_ID=...
-GMAIL_CLIENT_SECRET=...
-GMAIL_REFRESH_TOKEN=...
-GMAIL_USER=seuemail@gmail.com
-```
-
-Use **Generate** para criar `LAUNCH_ADMIN_TOKEN`, se essa opção aparecer.
-O valor de `SITE_URL` deve ser exatamente a URL pública atual do serviço,
-incluindo `https://`, sem barra no final.
-
-As credenciais da Gmail API não são necessárias para receber pré-cadastros.
-Elas precisam estar preenchidas antes de executar o disparo dos convites.
-
-`LAUNCH_AT` é a data/hora oficial do lançamento em UTC. A landing page exibe
-o contador regressivo calculado no navegador. Quando o horário chega, o
-servidor verifica automaticamente os pré-cadastros pendentes e envia os
-convites usando a Gmail API. Se o serviço do Google estiver indisponível, o
-servidor tenta novamente a cada minuto enquanto permanecer ativo.
-
-### 3. Salvar e redeployar
-
-Clique em **Save Changes**. O Render normalmente inicia um novo deploy
-automaticamente. Se não iniciar, use **Manual Deploy → Deploy latest commit**.
-
-Depois, valide:
-
-```bash
-curl https://pokeverse-30es.onrender.com/api/saude
-```
-
-O retorno esperado é:
-
-```json
-{"ok":true}
-```
-
-Também faça um pré-cadastro de teste pela página pública e confirme que ele
-aparece no contador. Não execute o disparo de lançamento durante o teste.
-
-### 4. Configurar a Gmail API
-
-O envio usa OAuth2 e HTTPS. Não use senha de aplicativo neste fluxo. O
-`GMAIL_REFRESH_TOKEN` é o credencial de longa duração que autoriza o servidor
-a enviar pela conta definida em `GMAIL_USER`.
-
-Depois de salvar as variáveis e confirmar que o serviço está saudável, envie
-um convite de teste somente se houver um pré-cadastro de teste:
-
-```bash
-curl -X POST https://pokeverse-30es.onrender.com/api/auth/notificar-lancamento \
-  -H "X-Launch-Token: SEU_LAUNCH_ADMIN_TOKEN"
-```
-
-A rota manual só envia depois que `LAUNCH_AT` chega e envia apenas registros ainda não convidados. Cada registro é marcado
-como enviado somente depois que o SMTP confirma o envio. Se o SMTP falhar,
-ele poderá ser tentado novamente.
-
-A resposta manual inclui `enviados` e `pendentes`. Se já houver uma tentativa
-automática em andamento, a chamada manual aguarda essa mesma tentativa em vez
-de retornar falsamente `enviados: 0`. Erros de autenticação ou conexão SMTP
-retornam HTTP 502 e também aparecem nos Logs do Render.
-
-> Essa rota deve ser executada apenas no lançamento. O token administrativo
-> nunca deve ser colocado no front-end.
-
-### Usando `render.yaml`
-
-O [`render.yaml`](./render.yaml) já declara as novas variáveis. Como o serviço
-atual é **Blueprint managed**, um push que altere esse arquivo pode solicitar
-sincronização do Blueprint no Render. Revise as mudanças antes de aplicar.
-
-Para um serviço já existente, a forma mais simples e segura é adicionar as
-variáveis manualmente pelo painel, conforme a seção anterior. Não altere
-`DATABASE_URL` nem recrie o banco.
-
-## Rotas da API
-
-| Método | Rota | Autenticação | Descrição |
+## API
+| Método | Rota | Login? | Descrição |
 |---|---|---|---|
-| `POST` | `/api/auth/pre-cadastro` | Não | Salva `{ nome_completo, email }` |
-| `GET` | `/api/auth/pre-cadastro/:token` | Não | Valida o convite |
-| `POST` | `/api/auth/pre-cadastro/finalizar` | Não | Cria a conta com `{ token, nome_usuario, senha }` |
-| `POST` | `/api/auth/notificar-lancamento` | `X-Launch-Token` | Envia os convites pendentes |
-| `POST` | `/api/auth/cadastro` | Não | Cadastro legado direto |
-| `POST` | `/api/auth/login` | Não | Login por usuário/e-mail e senha |
-| `GET` | `/api/auth/eu` | Bearer JWT | Dados da sessão atual |
-| `GET` | `/api/estatisticas` | Não | Contador de interessados antes do lançamento ou usuários cadastrados depois dele, além de posts |
-| `GET` | `/api/posts?categoria=` | Opcional | Lista posts |
-| `POST` | `/api/posts` | Bearer JWT | Cria um post |
-| `DELETE` | `/api/posts/:id` | Bearer JWT | Remove o próprio post |
-| `POST` | `/api/posts/:id/curtir` | Bearer JWT | Alterna curtida |
-| `GET` | `/api/posts/:id/comentarios` | Não | Lista comentários |
-| `POST` | `/api/posts/:id/comentarios` | Bearer JWT | Cria comentário |
+| POST | `/api/auth/cadastro` | | `{ nome_usuario, email, senha }` |
+| POST | `/api/auth/login` | | `{ login, senha }` (login = usuário ou e-mail) |
+| GET | `/api/auth/eu` | ✔ | dados do usuário logado |
+| GET | `/api/estatisticas` | | `{ membros, posts }` |
+| GET | `/api/posts?categoria=&depois=` | | lista posts (categoria opcional; `depois` = só ids maiores) |
+| POST | `/api/posts` | ✔ | `{ categoria, conteudo, imagem }` (imagem opcional, data URL) |
+| GET | `/api/posts/:id/imagem` | | imagem do post |
+| DELETE | `/api/posts/:id` | ✔ | apaga (só o autor) |
+| POST | `/api/posts/:id/curtir` | ✔ | curte/descurte |
+| GET | `/api/posts/:id/comentarios` | | lista comentários |
+| POST | `/api/posts/:id/comentarios` | ✔ | `{ conteudo }` |
+| GET | `/api/encontros?tipo=&cidade=&meus=1&limite=` | | próximos encontros (`meus=1` exige login) |
+| POST | `/api/encontros` | ✔ | `{ tipo, titulo, data_hora, local, cidade, vagas, descricao }` |
+| DELETE | `/api/encontros/:id` | ✔ | cancela (só o organizador) |
+| POST | `/api/encontros/:id/participar` | ✔ | confirma ou desfaz a presença |
 
-## Observações do plano gratuito
-
-- O Web Service pode dormir após um período sem acesso.
-- O primeiro acesso depois disso pode demorar.
-- O PostgreSQL gratuito do Render pode ter limitações ou prazo de validade;
-  confira as condições atuais no painel.
-- Faça backup antes de alterações importantes no banco.
+Rotas com login exigem o header `Authorization: Bearer <token>`.

@@ -29,6 +29,7 @@
       </a>
       <nav class="nav">
         <a href="#categorias" class="nav-link">Categorias</a>
+        <a href="encontros.html" class="nav-link nav-link-feed">Encontros</a>
         <div id="nav-auth" class="nav-auth"></div>
       </nav>
     </div>
@@ -45,7 +46,7 @@
         <div class="hero-text">
           <div class="pill pill-red">
             <span class="pulse-dot"></span>
-            <span>Aguardando o lançamento</span>
+            <span>Comunidade Ativa</span>
           </div>
 
           <h1 class="hero-title font-outfit">
@@ -54,18 +55,18 @@
           </h1>
 
           <p class="hero-desc">
-            O Pokeverse está chegando. Deixe seu nome e e-mail para receber o convite assim que a comunidade for lançada.
+            Conecte-se com milhares de treinadores apaixonados. Discuta jogos, animes e cards com quem entende sua paixão.
           </p>
 
           <div class="stats">
             <div class="stat">
               <div class="stat-value font-outfit" id="stat-membros">–</div>
-              <div class="stat-label" id="stat-membros-label">Interessados</div>
+              <div class="stat-label">Membros</div>
             </div>
             <div class="stat-divider"></div>
             <div class="stat">
               <div class="stat-value font-outfit" id="stat-posts">–</div>
-              <div class="stat-label">Na lista</div>
+              <div class="stat-label">Discussões</div>
             </div>
             <div class="stat-divider"></div>
             <div class="stat">
@@ -75,7 +76,7 @@
           </div>
 
           <div class="hero-actions">
-            <a href="#entrar" class="btn btn-primary" data-cta>Fazer pré-cadastro</a>
+            <a href="#entrar" class="btn btn-primary" data-cta>Quero participar</a>
             <a href="#categorias" class="btn btn-outline">Ver categorias</a>
           </div>
         </div>
@@ -144,7 +145,7 @@
         </div>
         <h2 class="launch-title font-outfit" id="launch-title">
           Lançamento oficial em<br />
-          <span class="text-yellow">breve.</span>
+          <span class="text-yellow">5 de novembro.</span>
         </h2>
         <p class="launch-desc" id="launch-desc">
           Prepare suas Pokébolas: o Pokeverse abre as portas para todos os treinadores. Cadastre-se antes e garanta seu lugar desde o primeiro dia.
@@ -182,7 +183,7 @@
       <div class="join-grid">
         <div class="join-text">
           <div class="pill pill-blue">
-            <span>            Pré-cadastro gratuito</span>
+            <span>Ingresso Gratuito</span>
           </div>
 
           <h2 class="section-title font-outfit">
@@ -191,7 +192,7 @@
           </h2>
 
           <p class="join-desc">
-            Cadastre seu interesse agora. Quando o Pokeverse for lançado, enviaremos um link para você criar sua conta com segurança.
+            Preencha o formulário ao lado e ganhe acesso imediato às discussões, eventos exclusivos e ao nosso servidor no Discord.
           </p>
 
           <ul class="benefits">
@@ -199,19 +200,19 @@
               <span class="check">
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 6l3 3 5-5" /></svg>
               </span>
-              Convite por e-mail no lançamento
+              Acesso ao servidor Discord exclusivo
             </li>
             <li>
               <span class="check">
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 6l3 3 5-5" /></svg>
               </span>
-              Cadastro completo somente quando abrirmos
+              Participação em torneios e eventos
             </li>
             <li>
               <span class="check">
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 6l3 3 5-5" /></svg>
               </span>
-              Novidades sobre a comunidade
+              Newsletter semanal de lançamentos
             </li>
           </ul>
         </div>
@@ -223,13 +224,14 @@
           <form id="join-form" class="form">
             <div>
               <h3 class="form-title font-outfit">Juntar-se à comunidade</h3>
-              <p class="form-sub">Avise-me quando o Pokeverse for lançado.</p>
+              <p class="form-sub">Leva menos de 1 minuto.</p>
             </div>
 
             <div class="field">
-              <label for="nome_completo">Nome completo</label>
-              <input id="nome_completo" name="nome_completo" type="text" placeholder="Ash Ketchum" autocomplete="name"
-                minlength="2" maxlength="120" required />
+              <label for="nome_usuario">Nome de usuário</label>
+              <input id="nome_usuario" name="nome_usuario" type="text" placeholder="ash_ketchum" autocomplete="username"
+                minlength="3" maxlength="20" pattern="[a-zA-Z0-9_.]{3,20}"
+                title="De 3 a 20 caracteres: letras, números, _ ou ." required />
             </div>
 
             <div class="field">
@@ -237,34 +239,17 @@
               <input id="email" name="email" type="email" placeholder="ash@pallet.town" autocomplete="email" required />
             </div>
 
+            <div class="field">
+              <label for="senha">Senha</label>
+              <input id="senha" name="senha" type="password" placeholder="Mínimo de 6 caracteres" autocomplete="new-password"
+                minlength="6" required />
+            </div>
+
             <p class="form-error" id="join-error" role="alert" hidden></p>
 
-            <button type="submit" class="btn-submit" id="join-submit">Quero ser avisado</button>
-            <p class="form-terms">Ao fazer o pré-cadastro, você autoriza o envio do convite de lançamento para este e-mail.</p>
-          </form>
-
-          <form id="registration-form" class="form" hidden>
-            <div>
-              <h3 class="form-title font-outfit">Criar sua conta</h3>
-              <p class="form-sub">O Pokeverse já está no ar. Faça seu cadastro para entrar.</p>
-            </div>
-            <div class="field">
-              <label for="cadastro-nome_usuario">Nome de usuário</label>
-              <input id="cadastro-nome_usuario" name="nome_usuario" type="text" placeholder="ash_ketchum"
-                minlength="3" maxlength="20" pattern="[a-zA-Z0-9_.]{3,20}" autocomplete="username" required />
-            </div>
-            <div class="field">
-              <label for="cadastro-email">E-mail</label>
-              <input id="cadastro-email" name="email" type="email" placeholder="ash@pallet.town" autocomplete="email" required />
-            </div>
-            <div class="field">
-              <label for="cadastro-senha">Senha</label>
-              <input id="cadastro-senha" name="senha" type="password" placeholder="Mínimo de 6 caracteres"
-                minlength="6" autocomplete="new-password" required />
-            </div>
-            <p class="form-error" id="registration-error" role="alert" hidden></p>
-            <button type="submit" class="btn-submit" id="registration-submit">Criar minha conta</button>
-            <p class="form-terms">Já tem uma conta? <button type="button" class="link" id="registration-login">Fazer login</button></p>
+            <button type="submit" class="btn-submit" id="join-submit">Juntar-se à Comunidade</button>
+            <p class="form-terms">Já tem conta? <button type="button" class="link" id="join-login">Faça login</button></p>
+            <p class="form-terms">Ao se cadastrar, você aceita nossos termos de participação.</p>
           </form>
 
           <!-- Tela de sucesso -->
@@ -272,8 +257,8 @@
             <div class="success-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" /></svg>
             </div>
-            <h3 class="form-title font-outfit" id="success-title">Você está na lista!</h3>
-            <p class="form-desc">Quando o Pokeverse for lançado, enviaremos um e-mail com o link para criar sua conta.</p>
+            <h3 class="form-title font-outfit" id="success-title">Bem-vindo, Treinador!</h3>
+            <p class="form-desc">Sua conta está pronta. Agora você já pode postar, curtir e comentar.</p>
           </div>
         </div>
       </div>
@@ -340,6 +325,22 @@
     </div>
   </section>
 
+  <section id="encontros" class="meetups" hidden>
+    <div class="container">
+      <div class="meetups-head">
+        <div>
+          <div class="pill pill-blue">
+            <span>Na vida real</span>
+          </div>
+          <h2 class="section-title font-outfit">Próximos <span class="text-blue">encontros.</span></h2>
+          <p class="categories-desc meetups-desc">Batalhas, trocas de cartas e torneios marcados pela comunidade.</p>
+        </div>
+        <a href="encontros.html" class="btn btn-outline">Ver todos os encontros</a>
+      </div>
+      <div class="meetups-lista" id="home-encontros"></div>
+    </div>
+  </section>
+
   <!-- CTA -->
   <section class="cta">
     <div class="cta-ring cta-ring-right"></div>
@@ -347,7 +348,7 @@
     <div class="container cta-inner">
       <h2 class="cta-title font-outfit">Pronto para começar sua jornada?</h2>
       <p class="cta-desc" id="cta-membros">Treinadores de todo lugar já estão esperando por você.</p>
-      <a href="#entrar" class="btn-cta" data-cta>Fazer pré-cadastro</a>
+      <a href="#entrar" class="btn-cta" data-cta>Entrar no Pokeverse</a>
     </div>
   </section>
 
@@ -364,25 +365,6 @@
           <circle cx="16" cy="16" r="3" fill="#374151" />
         </svg>
         <span class="footer-name font-outfit">Pokeverse</span>
-      </div>
-
-      <div class="socials">
-        <button type="button" class="social" aria-label="Twitter">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-        </button>
-        <button type="button" class="social" aria-label="Instagram">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="2" width="20" height="20" rx="5" />
-            <circle cx="12" cy="12" r="4" />
-            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-          </svg>
-        </button>
-        <button type="button" class="social" aria-label="Discord">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" /></svg>
-        </button>
-        <button type="button" class="social" aria-label="YouTube">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
-        </button>
       </div>
 
       <p class="copyright">
