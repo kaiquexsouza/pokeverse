@@ -17,6 +17,21 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+      - key: SITE_URL
+        value: https://pokeverse-30es.onrender.com
+      - key: LAUNCH_AT
+        sync: false
+      - key: LAUNCH_ADMIN_TOKEN
+        generateValue: true
+      # Credenciais OAuth2 da Gmail API, preenchidas no painel do Render.
+      - key: GMAIL_CLIENT_ID
+        sync: false
+      - key: GMAIL_CLIENT_SECRET
+        sync: false
+      - key: GMAIL_REFRESH_TOKEN
+        sync: false
+      - key: GMAIL_USER
+        sync: false
 
 databases:
   - name: pokeverse-db

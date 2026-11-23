@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finalize seu cadastro | Pokeverse</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand"><span class="brand-name font-outfit">Pokeverse</span></a>
+    </div>
+  </header>
+  <main class="join">
+    <div class="container">
+      <div class="card-form cadastro-card">
+        <div class="card-form-bar"></div>
+        <div id="cadastro-loading" class="form"><h1 class="form-title font-outfit">Finalize seu cadastro</h1><p class="form-sub">Validando seu convite...</p></div>
+        <form id="cadastro-form" class="form" hidden>
+          <h1 class="form-title font-outfit">Crie sua conta no Pokeverse</h1>
+          <p class="form-sub" id="cadastro-email"></p>
+          <div class="field"><label for="nome_usuario">Nome de usuário</label><input id="nome_usuario" name="nome_usuario" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_.]{3,20}" autocomplete="username" /></div>
+          <div class="field"><label for="senha">Senha</label><input id="senha" name="senha" type="password" required minlength="6" autocomplete="new-password" /></div>
+          <p class="form-error" id="cadastro-error" role="alert" hidden></p>
+          <button class="btn-submit" type="submit" id="cadastro-submit">Criar minha conta</button>
+        </form>
+        <div id="cadastro-success" class="success" hidden>
+          <div class="success-icon">✓</div>
+          <h1 class="form-title font-outfit">Cadastro concluído!</h1>
+          <p class="form-desc">Sua conta está pronta. Entre na comunidade para começar.</p>
+          <a class="btn btn-primary" href="feed.html">Ir para o feed</a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="app.js"></script>
+  <script src="cadastro.js"></script>
+</body>
+</html>

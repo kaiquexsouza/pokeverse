@@ -3,11 +3,25 @@
 
 CREATE TABLE IF NOT EXISTS usuarios (
   id           SERIAL PRIMARY KEY,
+  nome_completo VARCHAR(120),
   nome_usuario VARCHAR(20)  NOT NULL,
   email        VARCHAR(255) NOT NULL,
   senha_hash   TEXT         NOT NULL,
   criado_em    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS nome_completo VARCHAR(120);
+
+CREATE TABLE IF NOT EXISTS pre_cadastros (
+  id              SERIAL PRIMARY KEY,
+  nome_completo   VARCHAR(120) NOT NULL,
+  email           VARCHAR(255) NOT NULL,
+  token_convite   TEXT,
+  convidado_em    TIMESTAMPTZ,
+  criado_em       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS pre_cadastros_email_unico ON pre_cadastros (LOWER(email));
 
 -- Nome de usuário e e-mail únicos, sem diferenciar maiúsculas/minúsculas
 CREATE UNIQUE INDEX IF NOT EXISTS usuarios_nome_usuario_unico ON usuarios (LOWER(nome_usuario));

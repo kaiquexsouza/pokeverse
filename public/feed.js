@@ -1,4 +1,8 @@
 // Feed: listar, criar e apagar posts; curtir; comentar.
+if (!App.usuario) {
+  window.location.replace('index.html#entrar');
+}
+
 const { el, icone, api, avatar, CATEGORIAS } = App;
 
 const ICONES = {
@@ -157,22 +161,6 @@ function trocarCategoria(categoria) {
 function renderizarComposer() {
   composer.replaceChildren();
   const usuario = App.usuario;
-
-  if (!usuario) {
-    composer.append(
-      el('div', { class: 'composer composer-convite' }, [
-        el('div', {}, [
-          el('h3', { class: 'composer-titulo font-outfit', text: 'Entre para participar' }),
-          el('p', { class: 'form-sub', text: 'Faça login para publicar, curtir e comentar.' }),
-        ]),
-        el('div', { class: 'composer-botoes' }, [
-          el('button', { type: 'button', class: 'btn btn-primary', text: 'Login', onclick: App.abrirLogin }),
-          el('a', { href: 'index.html#entrar', class: 'btn btn-outline', text: 'Criar conta' }),
-        ]),
-      ])
-    );
-    return;
-  }
 
   const texto = el('textarea', {
     name: 'conteudo',
@@ -553,7 +541,9 @@ document.addEventListener('sessao', () => {
 document.addEventListener('visibilitychange', buscarNovidades);
 setInterval(buscarNovidades, INTERVALO_NOVIDADES);
 
-aplicarTema();
-atualizarAbas();
-renderizarComposer();
-carregarPosts();
+if (App.usuario) {
+  aplicarTema();
+  atualizarAbas();
+  renderizarComposer();
+  carregarPosts();
+}
