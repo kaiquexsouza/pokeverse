@@ -5,13 +5,19 @@ const express = require('express');
 const helmet = require('helmet');
 const db = require('./db');
 const { limiteGeral } = require('./limites');
-const authRoutes = require('./routes/auth');
+const { dataLancamento, lancado, exigirLancado } = require('./lancamento');
+const {
+  router: authRoutes,
+  iniciarAgendamentoLancamento,
+  notificarLancamento,
+} = require('./routes/auth');
 const postRoutes = require('./routes/posts');
 const encontroRoutes = require('./routes/encontros');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const PRODUCAO = process.env.NODE_ENV === 'production';
+const PUBLIC = path.join(__dirname, '..', 'public');
 
 app.set('trust proxy', 1);
 
@@ -33,23 +39,62 @@ app.use(express.json({ limit: '20kb' }));
 // API
 app.use('/api', limiteGeral);
 app.use('/api/auth', authRoutes);
-app.use('/api/posts', postRoutes);
-app.use('/api/encontros', encontroRoutes);
+// Até o lançamento, o site completo (posts e encontros) fica fechado.
+app.use('/api/posts', exigirLancado, postRoutes);
+app.use('/api/encontros', exigirLancado, encontroRoutes);
 
 app.get('/api/estatisticas', async (req, res) => {
+  const launched = lancado();
+  // Antes do lançamento conta os interessados; depois, os usuários.
   const { rows } = await db.query(
-    `SELECT (SELECT COUNT(*) FROM usuarios)::int AS membros,
-            (SELECT COUNT(*) FROM posts)::int    AS posts`
+    `SELECT (SELECT COUNT(*) FROM ${launched ? 'usuarios' : 'pre_cadastros'})::int AS membros,
+            (SELECT COUNT(*) FROM posts)::int AS posts`
   );
-  res.json(rows[0]);
+  res.json({ ...rows[0], launched });
+});
+
+app.get('/api/lancamento', (req, res) => {
+  const data = dataLancamento();
+  const launched = lancado();
+  if (launched) {
+    notificarLancamento()
+      .then(({ enviados }) => {
+        if (enviados) console.log(`Convites enviados após verificação de lançamento: ${enviados}.`);
+      })
+      .catch((err) => console.error('Falha ao enviar convites após o lançamento:', err.message));
+  }
+  res.json({ launchAt: data ? data.toISOString() : null, launched });
 });
 
 app.get('/api/saude', (req, res) => res.json({ ok: true }));
 
 app.use('/api', (req, res) => res.status(404).json({ erro: 'Rota não encontrada.' }));
 
-// Site (HTML, CSS e JS)
-app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));
+// ===== Site (HTML, CSS e JS) =====
+// Antes do lançamento, qualquer página do site mostra o pré-cadastro.
+// Depois do lançamento, o site completo (public/index.html) assume sozinho.
+const ARQUIVOS_PRE_LANCAMENTO = new Set([
+  '/pre-cadastro.js',
+  '/pre-cadastro-app.js',
+  '/style.css',
+  '/favicon.svg',
+]);
+
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+
+  if (lancado()) {
+    // A tela de pré-cadastro não existe mais depois do lançamento.
+    if (req.path === '/pre-cadastro.html') return res.redirect('/');
+    return next();
+  }
+
+  if (ARQUIVOS_PRE_LANCAMENTO.has(req.path)) return next();
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(path.join(PUBLIC, 'pre-cadastro.html'));
+});
+
+app.use(express.static(PUBLIC, { extensions: ['html'] }));
 
 // JSON inválido no corpo ou erro inesperado
 app.use((err, req, res, next) => {
@@ -65,6 +110,7 @@ app.use((err, req, res, next) => {
 
 db.initDb()
   .then(() => {
+    iniciarAgendamentoLancamento();
     app.listen(PORT, () => console.log(`Pokeverse rodando em http://localhost:${PORT}`));
   })
   .catch((err) => {
