@@ -97,3 +97,17 @@ Observações do plano gratuito:
 | POST | `/api/encontros/:id/participar` | ✔ | confirma ou desfaz a presença |
 
 Rotas com login exigem o header `Authorization: Bearer <token>`.
+
+## Lançamento (pré-cadastro → site completo)
+
+O site tem duas telas que se alternam sozinhas pela data da variável de ambiente `LAUNCH_AT`
+(formato UTC, ex.: `2026-11-30T03:00:00.000Z` = 00:00 de 30/11 no horário de Brasília):
+
+- **Antes da data:** qualquer endereço do site mostra o pré-cadastro (`public/pre-cadastro.html`).
+  As rotas de posts, encontros e criação direta de conta ficam bloqueadas (HTTP 403).
+- **Depois da data:** o site completo (`public/index.html`) assume e os convites por e-mail
+  são enviados aos pré-cadastrados.
+- **Sem `LAUNCH_AT` (ou com data inválida):** o site fica em modo pré-cadastro.
+
+Para testar o site completo localmente, use uma data passada, por exemplo
+`LAUNCH_AT=2020-01-01T00:00:00.000Z` no `.env`.
